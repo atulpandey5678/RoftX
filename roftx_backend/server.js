@@ -1,39 +1,62 @@
 // server.js
 
-// 1. Import the tools we need
+// 1. Load environment variables from the .env file
+// This line MUST be at the very top.
+require('dotenv').config();
+
+// 2. Import the tools we need
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const { OAuth2Client } = require('google-auth-library');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-// 2. Create the server application
-const app = express();
-const port = process.env.PORT || 3000; // Render will set the PORT environment variable
+// --- 3. Securely Get Keys and Perform Startup Security Check ---
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const DATABASE_URL = process.env.DATABASE_URL;
+const DATABASE_PASSWORD = process.env.DATABASE_PASSWORD;
 
-// --- 3. Securely Get Keys from Environment Variables ---
-// These will be set in the Render dashboard, not in the code.
-const GOOGLE_CLIENT_ID = process.env.225100810623-7v2md7r8r2os44of016c6a3ebk0gseom.apps.googleusercontent.com;
-const GEMINI_API_KEY = process.env.AIzaSyCY8CxYANsCjPIqJt4WTDLBpJq_wuCocic;
-const DATABASE_URL = process.env.DATABASE_URL; // Render provides this automatically
+// **CRITICAL SECURITY CHECK**
+// The server will refuse to start if any of these essential keys are missing.
+if (!GOOGLE_CLIENT_ID || !GEMINI_API_KEY) {
+    console.error("FATAL ERROR: Missing GOOGLE_CLIENT_ID or GEMINI_API_KEY in your .env file.");
+    process.exit(1); // Shuts down the server immediately
+}
+if (!DATABASE_URL && !DATABASE_PASSWORD) {
+    console.error("FATAL ERROR: Missing DATABASE_URL (for Render) or DATABASE_PASSWORD (for local) in your .env file.");
+    process.exit(1); // Shuts down the server immediately
+}
+
+
+// 4. Create the server application
+const app = express();
+const port = process.env.PORT || 3000;
 
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
-// 4. Configure the server
+// 5. Configure the server
 app.use(cors());
 app.use(express.json());
 
-// 5. Connect to your Production PostgreSQL Database on Render
+// 6. Connect to your Database
+// This setup works for both Render (live) and your local machine (testing).
 const pool = new Pool({
-    connectionString: DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false // Required for Render's database connections
-    }
+    connectionString: DATABASE_URL, // Render provides this automatically
+    // Local connection settings are used if DATABASE_URL is not set
+    ...(!DATABASE_URL && {
+        user: 'postgres',
+        host: 'localhost',
+        database: 'roftx_db',
+        password: DATABASE_PASSWORD,
+        port: 5432,
+    }),
+    ssl: DATABASE_URL ? { rejectUnauthorized: false } : false, // Enable SSL only for Render
 });
 
 // --- API Endpoints ---
 
-// 6. Create the secure Google login endpoint
+// 7. Create the secure Google login endpoint
 app.post('/api/auth/google', async (req, res) => {
     const { token } = req.body;
     if (!token) return res.status(400).json({ error: 'No token provided.' });
@@ -69,7 +92,7 @@ app.post('/api/auth/google', async (req, res) => {
     }
 });
 
-// 7. Create the secure Gemini API endpoint
+// 8. Create the secure Gemini API endpoint
 app.post('/api/gemini', async (req, res) => {
     const payload = req.body;
     if (!payload) return res.status(400).json({ error: 'No payload provided.' });
@@ -96,7 +119,7 @@ app.post('/api/gemini', async (req, res) => {
 });
 
 
-// 8. Start the server
+// 9. Start the server
 app.listen(port, () => {
     console.log(`RoftX backend server is running on port ${port}`);
 });
