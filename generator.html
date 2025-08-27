@@ -535,6 +535,9 @@
                 };
                 if (expectJson) {
                     payload.generationConfig.responseMimeType = "application/json";
+                // Highlight any http://localhost:3000 link in the prompt (for debugging/visibility)
+                if (prompt && prompt.includes('https://roftx.onrender.com/')) {
+                    console.warn('Prompt contains https://roftx.onrender.com/ link:', prompt);
                 }
                 return await makeApiCall(payload);
             }
