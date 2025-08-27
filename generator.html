@@ -512,7 +512,7 @@
 
             function extractJson(rawString) {
                 const startIndex = rawString.indexOf('[');
-                const endIndex = rawString.lastIndexOf(']');
+                const endIndex = rawString.lastIndexOf
                 if (startIndex === -1 || endIndex === -1) {
                     const markdownMatch = rawString.match(/```json\s*([\s\S]*?)\s*```/);
                     if (markdownMatch && markdownMatch[1]) {
@@ -556,8 +556,8 @@
 
             async function makeApiCall(payload) {
                 [suggestTopicsButton, generateHooksButton, writePostButton].forEach(btn => btn.disabled = true);
-                const apiKey = "AIzaSyCY8CxYANsCjPIqJt4WTDLBpJq_wuCocic";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                const apiKey = "https://roftx.onrender.com/api/gemini";
+                const apiUrl = "https://roftx.onrender.com/api/gemini";
                 try {
                     const response = await fetch(apiUrl, {
                         method: 'POST',

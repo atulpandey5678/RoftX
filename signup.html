@@ -63,22 +63,45 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // --- Google Auth Callback ---
         // This function is called by the Google library after a successful sign-in.
         function handleCredentialResponse(response) {
-          console.log("Encoded JWT ID token: " + response.credential);
-          // In a real application, you would send this 'response.credential' token 
-          // to your backend server for verification. The server would then check your
-          // pgAdmin database and create a new user if one doesn't exist.
-          
-          // For this demo, we will just redirect to the generator page.
-          window.location.href = 'generator.html';
+          // Send the credential to your backend for verification
+          fetch('https://roftx.onrender.com/api/auth/google', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ credential: response.credential })
+          })
+          .then(res => res.json())
+          .then(data => {
+            // Handle backend response (e.g., save token, redirect)
+            if (data.success) {
+              // Optionally store a session token, etc.
+              window.location.href = 'generator.html';
+            } else {
+              alert('Authentication failed!');
+            }
+          })
+          .catch(err => {
+            alert('Error connecting to backend.');
+            console.error(err);
+          });
         }
         
         // --- IMPORTANT: Google Client ID Setup ---
         // To make this work, you must do the following:
+        // Make sure http://localhost:3000 is added to your "Authorized JavaScript origins" in the Google Cloud Console.
         // 1. Go to the Google Cloud Console and create an OAuth 2.0 Client ID.
         // 2. Make sure to add your website's URL to the "Authorized JavaScript origins".
         // 3. Copy your "Client ID".
         // 4. In the HTML above (line 30), replace "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com" 
         //    with your actual Client ID.
+
+        // Example Express route
+        app.post('/api/auth/google', async (req, res) => {
+          const { credential } = req.body;
+          // Verify the token, create/check user, etc.
+          // Respond with { success: true } or { success: false }
+        });
     </script>
 
 </body>
