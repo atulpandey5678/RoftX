@@ -10,6 +10,7 @@ const cors = require('cors');
 const { Pool } = require('pg');
 const { OAuth2Client } = require('google-auth-library');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
 // --- 3. Securely Get Keys and Perform Startup Security Check ---
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
@@ -107,6 +108,15 @@ app.post('/api/gemini', async (req, res) => {
 
         if (!geminiResponse.ok) {
             const errorBody = await geminiResponse.text();
+            // Check if running locally and log the error with the local server URL
+            if (process.env.PORT === '3000' || port === 3000) {
+            console.error(`Error from Gemini API when called from https://roftx.onrender.com//: ${errorBody}`);
+            // Suggest using the deployed backend if running locally
+            res.status(geminiResponse.status).json({
+                error: "Gemini API request failed. If you are running locally, try sending your request to https://roftx.onrender.com/ instead of http://localhost:3000/."
+            });
+            return;
+            }
             throw new Error(`API request failed: ${errorBody}`);
         }
         const data = await geminiResponse.json();
@@ -118,8 +128,21 @@ app.post('/api/gemini', async (req, res) => {
     }
 });
 
+// Add a root route to handle GET requests to "/"
+app.get('/', (req, res) => {
+    res.send('Welcome to the RoftX backend API!');
+});
+
+// Proxy API requests to deployed backend if running locally
+if (!process.env.RENDER) {
+    app.use('/api', createProxyMiddleware({
+        target: 'https://roftx.onrender.com',
+        changeOrigin: true,
+    }));
+}
 
 // 9. Start the server
 app.listen(port, () => {
-    console.log(`RoftX backend server is running on port ${port}`);
+    const url = process.env.RENDER ? 'https://roftx.onrender.com/' : `http://localhost:${port}/`;
+    console.log(`RoftX backend server is running at ${url}`);
 });
