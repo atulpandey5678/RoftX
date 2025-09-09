@@ -52,7 +52,7 @@
 
     <header class="sticky top-0 w-full z-20 p-4 bg-black/30 backdrop-blur-sm border-b border-slate-800">
         <div class="container mx-auto flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-bold text-white">RoftX<span class="text-indigo-400"></span></a>
+            <a href="index.html" class="text-2xl font-bold text-white">RoftX</a>
         </div>
     </header>
 
@@ -62,7 +62,7 @@
                 
                 <div id="initial-state" class="fade-in">
                     <h2 class="text-3xl md:text-4xl font-bold">Generate Your First High-Impact Post</h2>
-                    <p class="mt-4 text-slate-400 max-w-2xl mx-auto">This is a preview of our core AI engine, which is currently under development. Experience the magic of AI-powered personal branding.</p>
+                    <p class="mt-4 text-slate-400 max-w-2xl mx-auto">This is a preview of our core AI engine. Experience the magic of AI-powered personal branding.</p>
                     
                     <div class="mt-10 bg-slate-900/50 p-6 sm:p-8 rounded-2xl border border-slate-800 text-left">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -162,8 +162,8 @@
         <div id="feedback-form-container" class="hidden absolute bottom-full right-0 mb-2 w-72 bg-slate-800 border border-slate-700 rounded-lg shadow-2xl p-4 transition-all duration-300 origin-bottom-right">
             <form id="feedback-form">
                 <h3 class="font-semibold text-white mb-2">Share Your Feedback</h3>
-                <textarea name="feedback-input" id="feedback-input" rows="4" class="focusable w-full bg-slate-900 border border-slate-600 rounded-md p-2 text-sm text-slate-200 placeholder-slate-500" placeholder="Tell us what you think..."></textarea>
-                <button type="submit" id="feedback-submit-button" class="focusable w-full mt-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-500 disabled:opacity-50">Submit</button>
+                <textarea name="feedback" id="feedback-input" rows="4" class="focusable w-full bg-slate-900 border border-slate-600 rounded-md p-2 text-sm text-slate-200 placeholder-slate-500" placeholder="Tell us what you think..."></textarea>
+                <button type="submit" class="focusable w-full mt-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-500">Submit</button>
             </form>
             <div id="feedback-thanks" class="hidden text-center">
                 <p class="text-white font-semibold">Thank you!</p>
@@ -209,14 +209,12 @@
             const modalInstructions = document.getElementById('modal-instructions');
             const modalCancelButton = document.getElementById('modal-cancel-button');
             const modalSubmitButton = document.getElementById('modal-submit-button');
-            
-            const feedbackWidget = document.getElementById('feedback-widget');
+
             const feedbackToggleButton = document.getElementById('feedback-toggle-button');
             const feedbackFormContainer = document.getElementById('feedback-form-container');
             const feedbackForm = document.getElementById('feedback-form');
             const feedbackThanks = document.getElementById('feedback-thanks');
-            const feedbackSubmitButton = document.getElementById('feedback-submit-button');
-
+            
             let selectedHook = '';
             let loadingInterval;
             let regenerationContext = '';
@@ -250,7 +248,7 @@
 
             // --- Event Listeners ---
             styleUploadButton.addEventListener('click', () => styleFileUpload.click());
-            styleFileUpload.addEventListener('change', (e) => handleFileUpload(e, 'style'));
+            styleFileUpload.addEventListener('change', (e) => handleFileUpload(e));
             
             suggestTopicsButton.addEventListener('click', handleSuggestTopics);
             generateHooksButton.addEventListener('click', () => handleGenerateHooks());
@@ -277,12 +275,14 @@
 
             feedbackForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                feedbackSubmitButton.disabled = true;
-                feedbackSubmitButton.textContent = "Submitting...";
+                const feedbackText = document.getElementById('feedback-input').value;
+                if (!feedbackText.trim()) return;
 
-                const scriptURL = 'https://script.google.com/macros/s/AKfycbyUKHMAc58zxUQqyaUuYbSLgBSULaWDNHjSub1YXwA52ORZ3DUovYXeQIFuleMfwjptNQ/exec';
-
-                fetch(scriptURL, { method: 'POST', body: new FormData(feedbackForm)})
+                const scriptURL = 'https://script.google.com/macros/s/AKfycbz8RGIS4QZstbi0JSmVvGcZGZH0RhyGMRIsGnIIoaAlRjPH6QY82L9OpVIljfDVTrMgFQ/exec';
+                const formData = new FormData();
+                formData.append('feedback', feedbackText);
+                
+                fetch(scriptURL, { method: 'POST', body: formData})
                     .then(response => {
                         console.log('Success!', response);
                         feedbackForm.classList.add('hidden');
@@ -294,27 +294,15 @@
                             feedbackForm.reset();
                         }, 3000);
                     })
-                    .catch(error => {
-                        console.error('Error!', error.message);
-                        alert("Sorry, there was an error submitting your feedback. Please try again.");
-                    })
-                    .finally(() => {
-                        feedbackSubmitButton.disabled = false;
-                        feedbackSubmitButton.textContent = "Submit";
-                    });
+                    .catch(error => console.error('Error!', error.message));
             });
 
-
             // --- Main Logic Functions ---
-            async function handleFileUpload(event, type) {
+            async function handleFileUpload(event) {
                 const file = event.target.files[0];
                 if (!file) return;
-
-                const targetInput = styleInput;
-                const statusEl = styleFileStatus;
-
-                statusEl.textContent = `Processing ${file.name}...`;
-                targetInput.value = '';
+                styleFileStatus.textContent = `Processing ${file.name}...`;
+                styleInput.value = '';
 
                 const fileExtension = file.name.split('.').pop().toLowerCase();
                 
@@ -323,28 +311,29 @@
                     reader.onload = async (e) => {
                         const base64Data = e.target.result.split(',')[1];
                         try {
-                            const extractedText = await callGeminiForImage(base64Data, file.type);
-                            targetInput.value = extractedText;
-                            statusEl.textContent = `Successfully extracted text from ${file.name}.`;
+                            const payload = {
+                                contents: [{
+                                    parts: [
+                                        { text: "Extract all text from this image. If there is no text, respond with an empty string." },
+                                        { inlineData: { mimeType: file.type, data: base64Data } }
+                                    ]
+                                }]
+                            };
+                            const extractedText = await makeApiCall(payload);
+                            styleInput.value = extractedText;
+                            styleFileStatus.textContent = `Successfully extracted text from ${file.name}.`;
                         } catch (error) {
                             console.error("Image processing failed:", error);
-                            statusEl.textContent = `Error processing image: ${error.message}`;
+                            styleFileStatus.textContent = `Error processing image: ${error.message}`;
                         }
                     };
                     reader.readAsDataURL(file);
-                } else if (fileExtension === 'txt') {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        targetInput.value = e.target.result;
-                        statusEl.textContent = `Successfully loaded ${file.name}.`;
-                    };
-                    reader.readAsText(file);
-                } else if (['pdf', 'docx'].includes(fileExtension)) {
-                    targetInput.value = `[Content from your document '${file.name}' will be used to analyze your style.]`;
-                    statusEl.textContent = `${file.name} uploaded. The AI will analyze its content.`;
+                } else if (['txt', 'pdf', 'docx'].includes(fileExtension)) {
+                    styleInput.value = `[Content from your document '${file.name}' will be used to analyze your style.]`;
+                    styleFileStatus.textContent = `${file.name} uploaded. The AI will analyze its content.`;
                 } else {
-                    alert("Unsupported file format. Please use .txt, .png, or .jpg.");
-                    statusEl.textContent = "";
+                    alert("Unsupported file format.");
+                    styleFileStatus.textContent = "";
                 }
                 event.target.value = null;
             }
@@ -359,10 +348,8 @@
                 suggestTopicsButton.textContent = '...';
                 suggestedTopicsContainer.innerHTML = '';
                 
-                const prompt = `
-                    You are a LinkedIn content strategist. Based on the user's niche of "${niche}", suggest 3 timely post topics. Each topic should be a concise 1-2 line idea. Return them as a JSON array of strings.
-                `;
-
+                const prompt = `You are a LinkedIn content strategist. Based on the user's niche of "${niche}", suggest 3 timely post topics. Each topic should be a concise 1-2 line idea. Return them as a JSON array of strings.`;
+                
                 try {
                     const rawResult = await callGemini(prompt, true);
                     const jsonString = extractJson(rawResult);
@@ -399,26 +386,8 @@
                     loadingText.textContent = hookLoadingMessages[messageIndex];
                 }, 2000);
 
-                let prompt = `
-                    You are a copywriter who creates compelling opening lines for LinkedIn posts.
-                    CONTEXT:
-                    - User's niche: "${nicheInput.value.trim()}"
-                    - Selected topic: "${topicInput.value.trim()}"
-                    - Writing sample: "${styleInput.value.trim() || 'Not provided'}"
-                    - User instructions: "${instructions}"
-                    HOOK REQUIREMENTS:
-                    - 4-10 words maximum
-                    - Creates curiosity or surprise
-                    - Avoids overused LinkedIn phrases
-                    OUTPUT FORMAT:
-                    Return exactly this JSON structure:
-                    [
-                      { "hook": "Exact hook text" },
-                      { "hook": "Exact hook text" },
-                      { "hook": "Exact hook text" }
-                    ]
-                    Do not include any text outside the JSON array.
-                `;
+                let prompt = `You are a copywriter who creates compelling opening lines for LinkedIn posts. CONTEXT: - User's niche: "${nicheInput.value.trim()}" - Selected topic: "${topicInput.value.trim()}" - Writing sample: "${styleInput.value.trim() || 'Not provided'}" - User instructions: "${instructions}" HOOK REQUIREMENTS: - 4-10 words maximum - Creates curiosity or surprise - Avoids overused LinkedIn phrases. OUTPUT FORMAT: Return exactly this JSON structure: [ { "hook": "Exact hook text" }, { "hook": "Exact hook text" }, { "hook": "Exact hook text" } ]. Do not include any text outside the JSON array.`;
+
                 try {
                     const rawResult = await callGemini(prompt, true);
                     const jsonString = extractJson(rawResult);
@@ -450,27 +419,8 @@
                     loadingText.textContent = postLoadingMessages[messageIndex];
                 }, 2000);
 
-                let prompt = `
-                    You are a LinkedIn ghostwriter who creates engaging posts that sound authentic and generate meaningful engagement.
-                    POST CONTEXT:
-                    - Hook: "${selectedHook}"
-                    - Topic: "${topicInput.value.trim()}"
-                    - User's niche: "${nicheInput.value.trim()}"
-                    - Writing sample: "${styleInput.value.trim() || 'Not provided'}"
-                    - User instructions: "${instructions}"
-                    WRITING GUIDELINES:
-                    
-                    - Use short paragraphs (1-2 sentences each) and line breaks for easy mobile reading.
-                    - Be conversational but professional
-                    
-                    - End with a question that requires more than a yes/no answer.
-                    HASHTAG REQUIREMENTS:
-                    - Include exactly 5 hashtags at the end of the post.
-                    - Must include #RoftX.
-                    - Choose 4 others relevant to the topic and audience.
-                    AVOID: Generic corporate language, humble brags, overused phrases, being too salesy.
-                    Write the complete post starting immediately after the hook. Do not repeat the hook or add any explanatory text.
-                `;
+                let prompt = `You are a LinkedIn ghostwriter who creates engaging posts that sound authentic. POST CONTEXT: - Hook: "${selectedHook}" - Topic: "${topicInput.value.trim()}" - User's niche: "${nicheInput.value.trim()}" - Writing sample: "${styleInput.value.trim() || 'Not provided'}" - User instructions: "${instructions}" WRITING GUIDELINES: - Match the user's voice. - Use short paragraphs (1-2 sentences) and line breaks. - Be conversational but professional. - 200-300 words total. - End with a question. HASHTAG REQUIREMENTS: - Include exactly 5 hashtags at the end. - Must include #RoftX. - Choose 4 others relevant to the topic. AVOID: Generic corporate language, humble brags, overused phrases. Write the complete post starting immediately after the hook. Do not repeat the hook or add any explanatory text.`;
+
                 try {
                     const postBody = await callGemini(prompt, false);
                     postBodyOutput.value = `${selectedHook}\n\n${postBody}`;
@@ -512,7 +462,7 @@
 
             function extractJson(rawString) {
                 const startIndex = rawString.indexOf('[');
-                const endIndex = rawString.lastIndexOf
+                const endIndex = rawString.lastIndexOf(']');
                 if (startIndex === -1 || endIndex === -1) {
                     const markdownMatch = rawString.match(/```json\s*([\s\S]*?)\s*```/);
                     if (markdownMatch && markdownMatch[1]) {
@@ -527,37 +477,18 @@
                 const payload = { 
                     contents: [{ parts: [{ text: prompt }] }],
                     generationConfig: {
-                        "temperature": 0.7,
-                        "top_p": 0.9,
-                        "top_k": 40,
-                        "max_output_tokens": 1024,
+                        "temperature": 0.7, "top_p": 0.9, "top_k": 40, "max_output_tokens": 1024,
                     }
                 };
                 if (expectJson) {
                     payload.generationConfig.responseMimeType = "application/json";
-                // Highlight any http://localhost:3000 link in the prompt (for debugging/visibility)
-                if (prompt && prompt.includes('https://roftx.onrender.com/')) {
-                    console.warn('Prompt contains https://roftx.onrender.com/ link:', prompt);
                 }
                 return await makeApiCall(payload);
             }
-
-            async function callGeminiForImage(base64Data, mimeType) {
-                const payload = {
-                    contents: [{
-                        parts: [
-                            { text: "Extract all text from this image. If there is no text, respond with an empty string." },
-                            { inlineData: { mimeType: mimeType, data: base64Data } }
-                        ]
-                    }]
-                };
-                return await makeApiCall(payload);
-            }
-
+            
             async function makeApiCall(payload) {
                 [suggestTopicsButton, generateHooksButton, writePostButton].forEach(btn => btn.disabled = true);
-                const apiKey = "https://roftx.onrender.com/api/gemini";
-                const apiUrl = "https://roftx.onrender.com/api/gemini";
+                const apiUrl = `https://roftx-1.onrender.com/api/gemini`;
                 try {
                     const response = await fetch(apiUrl, {
                         method: 'POST',
@@ -581,9 +512,8 @@
                     }
                 } catch (error) {
                     console.error("Full error during API call:", error);
-                    throw error; // Re-throw the error to be caught by the calling function
-                }
-                finally {
+                    throw error;
+                } finally {
                     suggestTopicsButton.disabled = false;
                     generateHooksButton.disabled = false;
                     if(selectedHook) writePostButton.disabled = false;
