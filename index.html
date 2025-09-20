@@ -15,37 +15,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0A0A0A;
-            color: #E2E8F0;
-        }
-        .gradient-text {
-            background: linear-gradient(90deg, #4F46E5, #A78BFA);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .hero-glow {
-            box-shadow: 0 0 80px 20px rgba(79, 70, 229, 0.4);
-        }
-        .video-aspect {
-            position: relative;
-            width: 100%;
-            padding-top: 56.25%; /* 16:9 Aspect Ratio */
-        }
-        .video-aspect iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-        .focusable:focus-visible {
-            outline: 2px solid #A78BFA;
-            outline-offset: 4px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="antialiased">
     <!-- Google Tag Manager (noscript) -->
@@ -57,9 +27,11 @@
     <header class="absolute top-0 left-0 w-full z-10 p-4">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold text-white">RoftX</h1>
-            <a href="signup.html" class="focusable bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-500 transition-colors">
-                Let's Start
-            </a>
+            <nav>
+                <a href="signup.html" class="focusable bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-500 transition-colors">
+                    Let's Start
+                </a>
+            </nav>
         </div>
     </header>
 
@@ -139,28 +111,28 @@
                         <h3 class="text-2xl font-bold mb-6 text-slate-800">Before RoftX...</h3>
                         <ul class="space-y-4">
                             <li class="flex items-start gap-3">
-                                <img src="https://placehold.co/24x24/fee2e2/ef4444?text=X" class="mt-1 rounded-full" alt="Cross Icon"/>
+                                <svg class="h-6 w-6 text-red-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                                 <div>
                                     <h4 class="font-semibold">Content Blank</h4>
                                     <p class="text-slate-600">Struggling to find fresh, engaging ideas for your posts.</p>
                                 </div>
                             </li>
                             <li class="flex items-start gap-3">
-                                <img src="https://placehold.co/24x24/fee2e2/ef4444?text=X" class="rounded-full mt-1" alt="Cross Icon"/>
+                                <svg class="h-6 w-6 text-red-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                                 <div>
                                     <h4 class="font-semibold">Hours Wasted</h4>
                                     <p class="text-slate-600">Spending your valuable time writing and rewriting drafts.</p>
                                 </div>
                             </li>
                             <li class="flex items-start gap-3">
-                                <img src="https://placehold.co/24x24/fee2e2/ef4444?text=X" class="rounded-full mt-1" alt="Cross Icon"/>
+                                <svg class="h-6 w-6 text-red-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                                 <div>
                                     <h4 class="font-semibold">Inconsistent Posting</h4>
                                     <p class="text-slate-600">Finding it impossible to keep up with a consistent content schedule.</p>
                                 </div>
                             </li>
                              <li class="flex items-start gap-3">
-                                <img src="https://placehold.co/24x24/fee2e2/ef4444?text=X" class="rounded-full mt-1" alt="Cross Icon"/>
+                                <svg class="h-6 w-6 text-red-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                                 <div>
                                     <h4 class="font-semibold">Low Engagement</h4>
                                     <p class="text-slate-600">Creating posts that don't get the likes, comments, or results you want.</p>
@@ -173,28 +145,28 @@
                         <h3 class="text-2xl font-bold mb-6 text-slate-800">With RoftX...</h3>
                         <ul class="space-y-4">
                             <li class="flex items-start gap-3">
-                                <img src="https://placehold.co/24x24/dcfce7/22c55e?text=%E2%9C%93" class="rounded-full mt-1" alt="Checkmark Icon"/>
+                                <svg class="h-6 w-6 text-green-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                                 <div>
                                     <h4 class="font-semibold">Style Seeding</h4>
                                     <p class="text-slate-600">Save your unique writing style for perfectly matched content, every time.</p>
                                 </div>
                             </li>
                             <li class="flex items-start gap-3">
-                                <img src="https://placehold.co/24x24/dcfce7/22c55e?text=%E2%9C%93" class="rounded-full mt-1" alt="Checkmark Icon"/>
+                                <svg class="h-6 w-6 text-green-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                                 <div>
                                     <h4 class="font-semibold">AI-Powered Ideation</h4>
                                     <p class="text-slate-600">Get inspired with trending topics tailored to your specific niche.</p>
                                 </div>
                             </li>
                             <li class="flex items-start gap-3">
-                                <img src="https://placehold.co/24x24/dcfce7/22c55e?text=%E2%9C%93" class="rounded-full mt-1" alt="Checkmark Icon"/>
+                                <svg class="h-6 w-6 text-green-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                                 <div>
                                     <h4 class="font-semibold">One-Click Drafting</h4>
                                     <p class="text-slate-600">Go from a single idea to a full, high-impact post in seconds.</p>
                                 </div>
                             </li>
                             <li class="flex items-start gap-3">
-                                <img src="https://placehold.co/24x24/dcfce7/22c55e?text=%E2%9C%93" class="rounded-full mt-1" alt="Checkmark Icon"/>
+                                <svg class="h-6 w-6 text-green-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                                 <div>
                                     <h4 class="font-semibold">Content Scheduling & Analytics</h4>
                                     <p class="text-slate-600">Plan your content calendar and analyze post metrics to see what works.</p>
@@ -255,32 +227,40 @@
     </footer>
 
     <script>
-        const contactForm = document.getElementById('contact-form');
-        const contactSubmitButton = document.getElementById('contact-submit-button');
+        document.addEventListener('DOMContentLoaded', () => {
+            const contactForm = document.getElementById('contact-form');
+            const contactSubmitButton = document.getElementById('contact-submit-button');
+            const formResponse = document.createElement('p');
+            formResponse.className = 'mt-4 text-center';
+            contactForm.appendChild(formResponse);
 
-        contactForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            contactSubmitButton.disabled = true;
-            contactSubmitButton.textContent = "Sending...";
+            contactForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                contactSubmitButton.disabled = true;
+                contactSubmitButton.textContent = "Sending...";
+                formResponse.textContent = '';
 
-            const scriptURL = 'https://script.google.com/macros/s/AKfycbyiOr0BKLPFvGmyr96bClFUbeAElz4heMcMtfASTHfquB4lmGy1uIWfRXmlazqhWnFlNg/exec'; // IMPORTANT: Replace with your contact form script URL
-            
-            fetch(scriptURL, { method: 'POST', body: new FormData(contactForm)})
-                .then(response => {
-                    alert("Thank you for your message! We'll get back to you shortly.");
-                    contactForm.reset();
-                })
-                .catch(error => {
+                const scriptURL = 'https://script.google.com/macros/s/AKfycbyiOr0BKLPFvGmyr96bClFUbeAElz4heMcMtfASTHfquB4lmGy1uIWfRXmlazqhWnFlNg/exec';
+                
+                try {
+                    const response = await fetch(scriptURL, { method: 'POST', body: new FormData(contactForm)});
+                    if (response.ok) {
+                        formResponse.textContent = "Thank you for your message! We'll get back to you shortly.";
+                        formResponse.className = 'mt-4 text-center text-green-400';
+                        contactForm.reset();
+                    } else {
+                        throw new Error('Network response was not ok.');
+                    }
+                } catch (error) {
                     console.error('Error!', error.message);
-                    alert("Sorry, there was an error sending your message. Please try again.");
-                })
-                .finally(() => {
+                    formResponse.textContent = "Sorry, there was an error sending your message. Please try again.";
+                    formResponse.className = 'mt-4 text-center text-red-400';
+                } finally {
                     contactSubmitButton.disabled = false;
                     contactSubmitButton.textContent = "Send Message";
-                });
+                }
+            });
         });
     </script>
 </body>
 </html>
-
-</head>

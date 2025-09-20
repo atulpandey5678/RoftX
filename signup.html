@@ -62,46 +62,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <script>
         // --- Google Auth Callback ---
         // This function is called by the Google library after a successful sign-in.
-        function handleCredentialResponse(response) {
-          // Send the credential to your backend for verification
-          fetch('https://roftx.onrender.com/api/auth/google', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ credential: response.credential })
-          })
-          .then(res => res.json())
-          .then(data => {
-            // Handle backend response (e.g., save token, redirect)
-            if (data.success) {
-              // Optionally store a session token, etc.
-              window.location.href = 'generator.html';
-            } else {
-              alert('Authentication failed!');
-            }
-          })
-          .catch(err => {
-            alert('Error connecting to backend.');
-            console.error(err);
-          });
-        }
-        
-        // --- IMPORTANT: Google Client ID Setup ---
-        // To make this work, you must do the following:
-        // Make sure http://localhost:3000 is added to your "Authorized JavaScript origins" in the Google Cloud Console.
-        // 1. Go to the Google Cloud Console and create an OAuth 2.0 Client ID.
-        // 2. Make sure to add your website's URL to the "Authorized JavaScript origins".
-        // 3. Copy your "Client ID".
-        // 4. In the HTML above (line 30), replace "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com" 
-        //    with your actual Client ID.
+        async function handleCredentialResponse(response) {
+          try {
+            document.getElementById('welcome-message').textContent = 'Authenticating... Please wait.';
+            // Send the credential to your backend for verification
+            const serverResponse = await fetch('https://roftx-1.onrender.com/api/auth/google', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ token: response.credential }) // Supabase and Google libraries often use 'token'
+            });
 
-        // Example Express route
-        app.post('/api/auth/google', async (req, res) => {
-          const { credential } = req.body;
-          // Verify the token, create/check user, etc.
-          // Respond with { success: true } or { success: false }
-        });
+            const data = await serverResponse.json();
+            
+            if (serverResponse.ok && data.message === "Login successful!") {
+                // Optionally store a session token, etc.
+                window.location.href = 'generator.html';
+            } else {
+                alert(`Authentication failed: ${data.error || 'Unknown error'}`);
+                document.getElementById('welcome-message').textContent = 'Sign in to continue to the platform.';
+            }
+          } catch(err) {
+            alert('Error connecting to the backend. Please try again later.');
+            console.error(err);
+            document.getElementById('welcome-message').textContent = 'Sign in to continue to the platform.';
+          }
+        }
     </script>
 
 </body>
