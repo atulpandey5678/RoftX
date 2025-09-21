@@ -38,8 +38,8 @@ const port = process.env.PORT || 3000;
 
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
-// --- CRITICAL: Configure CORS for Prapp.use(cors()); // Enable Cross-Origin Resource Sharing so your frontend can make requests
-s
+// 5. Configure the server middleware
+app.use(cors()); // Enable Cross-Origin Resource Sharing so your frontend can make requests
 app.use(express.json()); // Allow the server to understand and parse JSON data from requests
 
 // 6. Connect to your Database
@@ -119,7 +119,7 @@ app.post('/api/gemini', async (req, res) => {
     }
 
     try {
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}Y`;
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
         
         const geminiResponse = await fetch(apiUrl, {
             method: 'POST',
@@ -143,4 +143,3 @@ app.post('/api/gemini', async (req, res) => {
 app.listen(port, () => {
     console.log(`✅ RoftX backend server is running and listening on port ${port}`);
 });
- 
