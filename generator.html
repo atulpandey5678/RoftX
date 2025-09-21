@@ -411,7 +411,7 @@
                 }
                 showState('loading-state');
                 loadingTitle.textContent = "Drafting Your Post...";
-                const postLoadingMessages = ["Performing deep research...", "Analyzing post structure...", "Weaving in your unique voice...", "Strategizing for engagement...", "Adding the finishing touches..."];
+                const postLoadingMessages = ["Performing deep research...", "Analyzing post structure...", "thinking... ", "Writing...","...", "Strategizing for engagement...", "Adding the finishing touches..."];
                 let messageIndex = 0;
                 loadingText.textContent = postLoadingMessages[messageIndex];
                 loadingInterval = setInterval(() => {
@@ -419,7 +419,7 @@
                     loadingText.textContent = postLoadingMessages[messageIndex];
                 }, 2000);
 
-                let prompt = `You are a LinkedIn ghostwriter who creates engaging posts that sound authentic. POST CONTEXT: - Hook: "${selectedHook}" - Topic: "${topicInput.value.trim()}" - User's niche: "${nicheInput.value.trim()}" - Writing sample: "${styleInput.value.trim() || 'Not provided'}" - User instructions: "${instructions}" WRITING GUIDELINES: - Match the user's voice. - Use short paragraphs (1-2 sentences) and line breaks. - Be conversational but professional. - 200-300 words total. - End with a question. HASHTAG REQUIREMENTS: - Include exactly 5 hashtags at the end. - Must include #RoftX. - Choose 4 others relevant to the topic. AVOID: Generic corporate language, humble brags, overused phrases. Write the complete post starting immediately after the hook. Do not repeat the hook or add any explanatory text.`;
+                let prompt = `You are a LinkedIn ghostwriter who creates engaging posts that sound authentic. POST CONTEXT: - Hook: "${selectedHook}" - Topic: "${topicInput.value.trim()}" - User's niche: "${nicheInput.value.trim()}" - Writing sample: "${styleInput.value.trim() || 'Not provided'}" - User instructions: "${instructions}" WRITING GUIDELINES: - Use short paragraphs (1-2 sentences) and line breaks. - Be conversational but professional. - End with a question. HASHTAG REQUIREMENTS: - Include exactly 5 hashtags at the end. - Must include #RoftX. - Choose 4 others relevant to the topic. AVOID: Generic corporate language, humble brags, overused phrases. Write the complete post starting immediately after the hook. Do not repeat the hook or add any explanatory text.`;
 
                 try {
                     const postBody = await callGemini(prompt, false);
