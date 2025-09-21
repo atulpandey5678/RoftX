@@ -19,14 +19,16 @@ const DATABASE_URL = process.env.DATABASE_URL; // This is provided automatically
 const DATABASE_PASSWORD = process.env.DATABASE_PASSWORD; // This is for your local .env file
 
 // **CRITICAL SECURITY CHECK**
-// The server will refuse to start if any of these essential keys are missing.
+// This code block ensures the server will refuse to start if any essential keys are missing.
+// This is the most common reason a server fails to deploy correctly.
 if (!GOOGLE_CLIENT_ID || !GEMINI_API_KEY) {
-    console.error("FATAL ERROR: Missing GOOGLE_CLIENT_ID or GEMINI_API_KEY. Please check your Environment Variables.");
-    process.exit(1);
+    console.error("FATAL ERROR: Missing GOOGLE_CLIENT_ID or GEMINI_API_KEY. Please check your Environment Variables on Render.");
+    process.exit(1); // Shuts down the server immediately
 }
+// This check is important. On Render, DATABASE_URL must exist. Locally, DATABASE_PASSWORD must exist.
 if (!DATABASE_URL && !DATABASE_PASSWORD) {
     console.error("FATAL ERROR: Missing DATABASE_URL (for Render) or DATABASE_PASSWORD (for local). Please check your Environment Variables.");
-    process.exit(1);
+    process.exit(1); // Shuts down the server immediately
 }
 
 
@@ -36,30 +38,16 @@ const port = process.env.PORT || 3000;
 
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
-// 5. Configure the server middleware with specific CORS options for security
-const allowedOrigins = [
-    'http://localhost:8080', 
-    'http://127.0.0.1:8080',
-    // Add your live Netlify/frontend domain here when you deploy
-    // e.g., 'https://www.roftx.com' 
-];
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true)
-    } else {
-      callback(new Error('Not allowed by CORS'))
-    }
-  }
-};
-
-app.use(cors(corsOptions));
-app.use(express.json());
+// 5. Configure the server middleware
+app.use(cors()); // Enable Cross-Origin Resource Sharing so your frontend can make requests
+app.use(express.json()); // Allow the server to understand and parse JSON data from requests
 
 // 6. Connect to your Database
+// This setup smartly works for both a live deployment on Render and your local machine.
 const pool = new Pool({
+    // When deployed on Render, it will use the DATABASE_URL environment variable.
     connectionString: DATABASE_URL,
+    // If DATABASE_URL is NOT found (i.e., you are running locally), it uses these settings.
     ...(!DATABASE_URL && {
         user: 'postgres',
         host: 'localhost',
@@ -67,6 +55,7 @@ const pool = new Pool({
         password: DATABASE_PASSWORD,
         port: 5432,
     }),
+    // Enable SSL for the secure connection to Render's database. This is required.
     ssl: DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 
@@ -92,9 +81,11 @@ app.post('/api/auth/google', async (req, res) => {
         
         const { sub: google_id, name: full_name, email, picture: picture_url, locale, given_name, family_name } = ticket.getPayload();
 
+        // Check if the user already exists in our database
         let userResult = await pool.query('SELECT * FROM users WHERE google_id = $1', [google_id]);
 
         if (userResult.rows.length === 0) {
+            // If the user does not exist, create a new record for them
             console.log(`New user detected: ${email}. Creating new record.`);
             userResult = await pool.query(
                 `INSERT INTO users (google_id, email, full_name, given_name, family_name, picture_url, locale, last_login) 
@@ -102,6 +93,7 @@ app.post('/api/auth/google', async (req, res) => {
                 [google_id, email, full_name, given_name, family_name, picture_url, locale]
             );
         } else {
+            // If the user already exists, just update their last login time and info
             console.log(`Returning user detected: ${email}. Updating last login.`);
             userResult = await pool.query(
                 `UPDATE users SET last_login = NOW(), full_name = $2, picture_url = $3 
@@ -113,6 +105,7 @@ app.post('/api/auth/google', async (req, res) => {
         res.status(200).json({ message: "Login successful!", user: userResult.rows[0] });
 
     } catch (error) {
+        // This will catch errors from both Google token verification and the database query
         console.error('Error during Google authentication process:', error);
         res.status(500).json({ error: 'Authentication failed due to a server error.' });
     }
@@ -135,6 +128,8 @@ app.post('/api/gemini', async (req, res) => {
         });
 
         const data = await geminiResponse.json();
+
+        // Forward the exact response (or error) from Gemini back to the frontend
         res.status(geminiResponse.status).json(data);
 
     } catch (error) {
@@ -148,4 +143,3 @@ app.post('/api/gemini', async (req, res) => {
 app.listen(port, () => {
     console.log(`✅ RoftX backend server is running and listening on port ${port}`);
 });
-
