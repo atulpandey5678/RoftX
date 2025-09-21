@@ -34,33 +34,12 @@ if (!DATABASE_URL && !DATABASE_PASSWORD) {
 
 // 4. Create the server application
 const app = express();
-const port = process.env.PORT || 5500;
+const port = process.env.PORT || 3000;
 
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
-// 5. Configure the server middleware
-
-// --- CRITICAL: Configure CORS for Production ---
-// This creates a "guest list" of websites that are allowed to make requests to this server.
-const allowedOrigins = [
-    'https://www.roftx.com/', // **IMPORTANT: REPLACE WITH YOUR ACTUAL LIVE WEBSITE URL**
-    'http://localhost:5500',         // For local testing
-    'http://127.0.0.1:5500'          // Also for local testing
-];
-
-const corsOptions = {
-    origin: function (origin, callback) {
-        // Allow requests if the origin is on our guest list
-        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            // Block requests from unapproved origins
-            callback(new Error('Not allowed by CORS'));
-        }
-    }
-};
-
-app.use(cors(corsOptions)); // Use the specific CORS options
+// --- CRITICAL: Configure CORS for Prapp.use(cors()); // Enable Cross-Origin Resource Sharing so your frontend can make requests
+s
 app.use(express.json()); // Allow the server to understand and parse JSON data from requests
 
 // 6. Connect to your Database
@@ -140,7 +119,7 @@ app.post('/api/gemini', async (req, res) => {
     }
 
     try {
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}Y`;
         
         const geminiResponse = await fetch(apiUrl, {
             method: 'POST',
