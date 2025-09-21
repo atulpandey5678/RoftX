@@ -14,8 +14,41 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display.swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0A0A0A;
+            color: #E2E8F0;
+        }
+        .gradient-text {
+            background: linear-gradient(90deg, #4F46E5, #A78BFA);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-glow {
+            box-shadow: 0 0 80px 20px rgba(79, 70, 229, 0.4);
+        }
+        .video-aspect {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+        }
+        .video-aspect iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .focusable:focus-visible {
+            outline: 2px solid #A78BFA;
+            outline-offset: 4px;
+        }
+        .video-modal-container {
+            transition: opacity 0.3s ease-in-out;
+        }
+    </style>
 </head>
 <body class="antialiased">
     <!-- Google Tag Manager (noscript) -->
@@ -61,16 +94,18 @@
                 Start Building in 60 Seconds ✨ &rarr;
             </a>
 
-            <!-- Demo Video -->
-            <div class="mt-24 w-full max-w-4xl mx-auto rounded-2xl overflow-hidden hero-glow border border-indigo-500/30">
-                <div class="video-aspect">
-                    <iframe 
-                        src="https://drive.google.com/file/d/11n9BSk9hevX9ajy_k2XQmnakwmjADbNd/preview" 
-                        frameborder="0" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen>
-                    </iframe>
-                </div>
+            <!-- Demo Video Thumbnail (Clickable) -->
+            <div id="video-thumbnail" class="mt-24 w-full max-w-4xl mx-auto rounded-2xl overflow-hidden hero-glow border border-indigo-500/30 cursor-pointer group">
+                <div class="block relative bg-black">
+                   <img src="https://placehold.co/1280x720/0A0A0A/E2E8F0?text=Watch+Demo" alt="RoftX Demo Video Thumbnail" class="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105">
+                   <div class="absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-300 group-hover:bg-black/60">
+                        <div class="w-20 h-20 bg-white/30 rounded-full flex items-center justify-center backdrop-blur-sm transition-transform duration-300 group-hover:scale-110">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white ml-1" viewBox="0 0 20 20" fill="currentColor">
+                               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                           </svg>
+                       </div>
+                   </div>
+               </div>
             </div>
         </section>
 
@@ -201,6 +236,7 @@
                             Send Message
                         </button>
                     </div>
+                    <p id="contact-form-status" class="h-5 text-center text-sm"></p>
                 </form>
             </div>
         </section>
@@ -226,35 +262,78 @@
         </div>
     </footer>
 
+    <!-- Video Modal -->
+    <div id="video-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 video-modal-container opacity-0">
+        <div class="relative w-full max-w-4xl bg-black rounded-lg shadow-2xl">
+            <button id="close-video-modal" class="absolute -top-3 -right-3 w-10 h-10 bg-white text-black text-2xl rounded-full flex items-center justify-center z-10 focusable hover:bg-gray-200 transition-colors">&times;</button>
+            <div class="video-aspect">
+                <iframe id="video-iframe" class="w-full h-full rounded-lg" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- Video Modal Logic ---
+            const videoThumbnail = document.getElementById('video-thumbnail');
+            const videoModal = document.getElementById('video-modal');
+            const closeVideoModal = document.getElementById('close-video-modal');
+            const videoIframe = document.getElementById('video-iframe');
+            const videoSrc = "https://drive.google.com/file/d/11n9BSk9hevX9ajy_k2XQmnakwmjADbNd/preview";
+
+            const openModal = () => {
+                videoIframe.src = videoSrc;
+                videoModal.classList.remove('hidden');
+                // Use a short timeout to allow the element to be rendered before adding the transition class
+                setTimeout(() => videoModal.classList.remove('opacity-0'), 10);
+            };
+
+            const closeModal = () => {
+                videoModal.classList.add('opacity-0');
+                // Wait for the fade-out transition to complete before hiding the element and stopping the video
+                setTimeout(() => {
+                    videoModal.classList.add('hidden');
+                    videoIframe.src = ""; // Stop the video from playing in the background
+                }, 300); 
+            };
+
+            videoThumbnail.addEventListener('click', openModal);
+            closeVideoModal.addEventListener('click', closeModal);
+            videoModal.addEventListener('click', (e) => {
+                // Close the modal only if the user clicks on the dark overlay background
+                if (e.target === videoModal) {
+                    closeModal();
+                }
+            });
+
+            // --- Contact Form Logic ---
             const contactForm = document.getElementById('contact-form');
             const contactSubmitButton = document.getElementById('contact-submit-button');
-            const formResponse = document.createElement('p');
-            formResponse.className = 'mt-4 text-center';
-            contactForm.appendChild(formResponse);
+            const contactFormStatus = document.getElementById('contact-form-status');
+            const scriptURL = 'https://script.google.com/macros/s/AKfycbyiOr0BKLPFvGmyr96bClFUbeAElz4heMcMtfASTHfquB4lmGy1uIWfRXmlazqhWnFlNg/exec'; // IMPORTANT: Replace with your actual Apps Script URL
 
             contactForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 contactSubmitButton.disabled = true;
                 contactSubmitButton.textContent = "Sending...";
-                formResponse.textContent = '';
+                contactFormStatus.textContent = ''; // Clear previous status
 
-                const scriptURL = 'https://script.google.com/macros/s/AKfycbyiOr0BKLPFvGmyr96bClFUbeAElz4heMcMtfASTHfquB4lmGy1uIWfRXmlazqhWnFlNg/exec';
-                
                 try {
                     const response = await fetch(scriptURL, { method: 'POST', body: new FormData(contactForm)});
                     if (response.ok) {
-                        formResponse.textContent = "Thank you for your message! We'll get back to you shortly.";
-                        formResponse.className = 'mt-4 text-center text-green-400';
+                        contactFormStatus.textContent = "Thank you! Your message has been sent.";
+                        contactFormStatus.classList.add('text-green-400');
+                        contactFormStatus.classList.remove('text-red-400');
                         contactForm.reset();
                     } else {
+                        // This will handle HTTP errors like 404 or 500
                         throw new Error('Network response was not ok.');
                     }
                 } catch (error) {
-                    console.error('Error!', error.message);
-                    formResponse.textContent = "Sorry, there was an error sending your message. Please try again.";
-                    formResponse.className = 'mt-4 text-center text-red-400';
+                    console.error('Error submitting form:', error);
+                    contactFormStatus.textContent = "Sorry, there was an error sending your message. Please try again.";
+                    contactFormStatus.classList.add('text-red-400');
+                    contactFormStatus.classList.remove('text-green-400');
                 } finally {
                     contactSubmitButton.disabled = false;
                     contactSubmitButton.textContent = "Send Message";
@@ -264,3 +343,4 @@
     </script>
 </body>
 </html>
+
