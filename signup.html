@@ -66,7 +66,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           try {
             document.getElementById('welcome-message').textContent = 'Authenticating... Please wait.';
             // Send the credential to your backend for verification
-            const serverResponse = await fetch('http://localhost:3000/api/auth/google', {
+            const serverResponse = await fetch('https://roftx-1.onrender.com/api/auth/google', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
