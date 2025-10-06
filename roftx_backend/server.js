@@ -1,6 +1,7 @@
 // server.js
 
 // 1. Load environment variables from the .env file
+// This line MUST be at the very top of your file.
 require('dotenv').config();
 
 // 2. Import the tools we need
@@ -39,7 +40,8 @@ const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 const allowedOrigins = [
     'https://www.roftx.com',         // Your production domain
     'http://localhost:8080',         // For local testing with live-server
-    'http://127.0.0.1:8080'          // Also for local testing
+    'http://127.0.0.1:8080',         // Also for local testing
+    'http://127.0.0.1:5501'          // The address from your screenshot
 ];
 const corsOptions = {
     origin: function (origin, callback) {
@@ -124,12 +126,13 @@ app.post('/api/gemini', async (req, res) => {
 
         // 2. Define the Claude API endpoint and model
         const apiUrl = 'https://api.anthropic.com/v1/messages';
-        const model = "claude-3-sonnet-20240229"; // A powerful and cost-effective model
+        const model = "claude-3-haiku-20240307";
 
         // 3. Create the new payload in the format Claude expects
         const claudePayload = {
             model: model,
             max_tokens: 1024,
+            temperature: 0.7,
             messages: [
                 { role: "user", content: prompt }
             ]

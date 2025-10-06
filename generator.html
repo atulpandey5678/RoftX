@@ -77,7 +77,7 @@
                                     <input type="text" id="topic-input" placeholder="e.g., 'The future of PLG'" class="focusable w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all">
                                     <button id="suggest-topics-button" class="focusable flex-shrink-0 px-4 py-2 rounded-lg bg-slate-700 text-white font-semibold transition-colors hover:bg-slate-600 disabled:opacity-50 disabled:cursor-wait">Suggest Topics</button>
                                 </div>
-                                <div id="suggested-topics-container" class="mt-2 flex flex-wrap gap-2"></div>
+                                <div id="suggested-topics-container" class="mt-2 flex flex-col gap-2"></div>
                             </div>
                         </div>
                         <div class="mt-6">
@@ -338,35 +338,59 @@
                 event.target.value = null;
             }
 
-            async function handleSuggestTopics() {
+            async function handleSuggestTopics(options = {}) {
+                const { instructions = '' } = options;
                 const niche = nicheInput.value.trim();
                 if (!niche) {
                     alert('Please enter your niche to get topic suggestions.');
                     return;
                 }
-                suggestTopicsButton.disabled = true;
-                suggestTopicsButton.textContent = '...';
-                suggestedTopicsContainer.innerHTML = '';
-                
-                const prompt = `You are a LinkedIn content strategist. Based on the user's niche of "${niche}", suggest 3 timely post topics. Each topic should be a concise 1-2 line idea. Return them as a JSON array of strings.`;
-                
+                showState('loading-state');
+                loadingTitle.textContent = "Suggesting Topics...";
+                loadingText.textContent = "Analyzing the latest trends in your niche...";
+
+                // --- NEW, DETAILED PROMPT FOR TOPIC SUGGESTION ---
+                const prompt = `
+                    You are a professional LinkedIn content strategist who closely tracks emerging industry trends and audience engagement patterns.
+                    Niche: ${niche}
+
+                    🎯 Task:
+                    Generate exactly 5 fresh, trending, and discussion-worthy LinkedIn post ideas for this niche.
+
+                    Each idea must:
+                    - Have a short, catchy, and professional title (under 12 words)
+                    - Include a one-line summary (under 20 words) that explains the core insight or discussion angle
+
+                    💡 Output Format:
+                    Return only a valid JSON array of objects, where each object has a "title" and a "summary" key. Example:
+                    [
+                        {"title": "Title 1", "summary": "Summary 1"},
+                        {"title": "Title 2", "summary": "Summary 2"}
+                    ]
+                    IMPORTANT: Do not include any text outside the JSON array.
+                `;
+
                 try {
-                    const rawResult = await callGemini(prompt, true);
+                    const rawResult = await callApi(prompt, true); // Expect JSON
                     const jsonString = extractJson(rawResult);
                     const topics = JSON.parse(jsonString);
+                    
+                    const topicsContainer = document.getElementById('suggested-topics-container');
+                    topicsContainer.innerHTML = ''; // Clear previous
+                    
                     topics.forEach(topic => {
                         const button = document.createElement('button');
-                        button.textContent = topic;
-                        button.className = 'focusable bg-slate-800 text-slate-300 px-3 py-2 rounded-lg text-sm hover:bg-indigo-500 hover:text-white transition-colors text-left';
-                        button.onclick = () => { topicInput.value = topic; };
-                        suggestedTopicsContainer.appendChild(button);
+                        button.className = 'focusable bg-slate-800 text-slate-300 p-3 rounded-lg text-sm hover:bg-indigo-500 hover:text-white transition-colors text-left w-full';
+                        button.innerHTML = `<strong class="block text-white">${topic.title}</strong><span class="text-xs text-slate-400">${topic.summary}</span>`;
+                        button.onclick = () => { document.getElementById('topic-input').value = topic.title; };
+                        topicsContainer.appendChild(button);
                     });
+                    showState('initial-state');
+                    
                 } catch (error) {
                     console.error("Topic suggestion failed:", error);
-                    suggestedTopicsContainer.innerHTML = `<p class="text-red-400 text-xs">Could not suggest topics. Please try again.</p>`;
-                } finally {
-                    suggestTopicsButton.disabled = false;
-                    suggestTopicsButton.textContent = 'Suggest Topics';
+                    alert("Sorry, something went wrong while suggesting topics. Please try again.");
+                    showState('initial-state');
                 }
             }
 
@@ -378,7 +402,7 @@
                 }
                 showState('loading-state');
                 loadingTitle.textContent = "Generating Hooks...";
-                const hookLoadingMessages = ["Analyzing your topic...", "Scanning for engaging angles...", "Crafting compelling openers..."];
+                const hookLoadingMessages = ["Analyzing your style...", "Crafting scroll-stopping openers...", "Applying psychological triggers..."];
                 let messageIndex = 0;
                 loadingText.textContent = hookLoadingMessages[messageIndex];
                 loadingInterval = setInterval(() => {
@@ -386,10 +410,33 @@
                     loadingText.textContent = hookLoadingMessages[messageIndex];
                 }, 2000);
 
-                let prompt = `You are a copywriter who creates compelling opening lines for LinkedIn posts. CONTEXT: - User's niche: "${nicheInput.value.trim()}" - Selected topic: "${topicInput.value.trim()}" - Writing sample: "${styleInput.value.trim() || 'Not provided'}" - User instructions: "${instructions}" HOOK REQUIREMENTS: - 4-10 words maximum - Creates curiosity or surprise - Avoids overused LinkedIn phrases. OUTPUT FORMAT: Return exactly this JSON structure: [ { "hook": "Exact hook text" }, { "hook": "Exact hook text" }, { "hook": "Exact hook text" } ]. Do not include any text outside the JSON array.`;
+                // --- NEW, DETAILED PROMPT FOR HOOK GENERATION ---
+                const prompt = `
+                    You are HOOK-CRAFT AI, a viral LinkedIn hook strategist.
+                    Context
+                    Niche: ${nicheInput.value.trim()}
+                    Topic: ${topicInput.value.trim()}
+                    Previous posts inspiration:
+                    ${styleInput.value.trim() || 'Not provided'}
+                    Additional Instructions: ${instructions}
 
+                    Step 1 — Analyze Previous Hooks
+                    Study the user’s previous posts to identify voice, rhythm, and emotional triggers.
+
+                    Step 2 — Use Hook Archetypes (for generation)
+                    Draw inspiration from archetypes like Contrarian, Vulnerable, Curiosity Gap, and Data Insight.
+
+                    Step 3 — Output
+                    Generate exactly 3 hooks, each 4–10 words long, emotionally charged, and in the same style as the user's previous posts.
+                    
+                    💡 Output Format:
+                    Return only a valid JSON array of strings. Example:
+                    ["Hook 1", "Hook 2", "Hook 3"]
+                    IMPORTANT: Do not include any text outside the JSON array.
+                `;
+                
                 try {
-                    const rawResult = await callGemini(prompt, true);
+                    const rawResult = await callApi(prompt, true); // Expect JSON
                     const jsonString = extractJson(rawResult);
                     const hooks = JSON.parse(jsonString);
                     renderHooks(hooks);
@@ -411,7 +458,7 @@
                 }
                 showState('loading-state');
                 loadingTitle.textContent = "Drafting Your Post...";
-                const postLoadingMessages = ["Performing deep research...", "Analyzing post structure...", "thinking... ", "Writing...","...", "Strategizing for engagement...", "Adding the finishing touches..."];
+                const postLoadingMessages = ["Applying the E.N.G.A.G.E Framework...", "Matching your authentic voice...", "Optimizing for engagement...", "Adding a powerful conclusion..."];
                 let messageIndex = 0;
                 loadingText.textContent = postLoadingMessages[messageIndex];
                 loadingInterval = setInterval(() => {
@@ -419,10 +466,35 @@
                     loadingText.textContent = postLoadingMessages[messageIndex];
                 }, 2000);
 
-                let prompt = `You are a LinkedIn ghostwriter who creates engaging posts that sound authentic. POST CONTEXT: - Hook: "${selectedHook}" - Topic: "${topicInput.value.trim()}" - User's niche: "${nicheInput.value.trim()}" - Writing sample: "${styleInput.value.trim() || 'Not provided'}" - User instructions: "${instructions}" WRITING GUIDELINES: - Use short paragraphs (1-2 sentences) and line breaks. - Be conversational but professional. - End with a question. HASHTAG REQUIREMENTS: - Include exactly 5 hashtags at the end. - Must include #RoftX. - Choose 4 others relevant to the topic. AVOID: Generic corporate language, humble brags, overused phrases. Write the complete post starting immediately after the hook. Do not repeat the hook or add any explanatory text.`;
+                // --- NEW, DETAILED PROMPT FOR FULL POST GENERATION ---
+                const prompt = `
+                    You are LINKEDIN-POST-ARCHITECT, an elite ghostwriter.
+                    
+                    🧩 INPUT CONTEXT
+                    Selected Hook: ${selectedHook}
+                    Topic: ${topicInput.value.trim()}
+                    User Niche: ${nicheInput.value.trim()}
+                    Previous Posts: ${styleInput.value.trim() || 'Not provided'}
+                    User Instructions: ${instructions}
 
-                try {
-                    const postBody = await callGemini(prompt, false);
+                    ⚙️ STRUCTURE — E.N.G.A.G.E Framework (Condensed)
+                    - Emotional Opening: Start right after the hook with relatable context.
+                    - Narrative Arc: Share a challenge or tension.
+                    - Genuine Insight: Deliver a contrarian or data-driven learning.
+                    - Actionable Wisdom: Give 2–3 clear takeaways.
+                    - Growth Connection: Tie the insight to a broader principle.
+                    - Engagement Catalyst: End with a single sharp, specific question.
+
+                    🧠 STYLE & FORMAT RULES
+                    - Voice: Match the user's tone, rhythm, and structure.
+                    - Length: 220–280 words in 4–6 short paragraphs (1–2 sentences each).
+                    - Hashtags: Include 3–4 high-volume tags, 1–2 niche tags, and #RoftX.
+
+                    Write the complete post body starting immediately after the hook. Do not repeat the hook or add any explanatory text.
+                `;
+                
+                 try {
+                    const postBody = await callApi(prompt, false); // Expect Text
                     postBodyOutput.value = `${selectedHook}\n\n${postBody}`;
                     showState('final-post-state');
                 } catch (error) {
@@ -430,21 +502,21 @@
                     alert("Sorry, something went wrong while writing the post. Please try again.");
                     showState('hooks-results-state');
                 } finally {
-                    clearInterval(loadingInterval);
+                     clearInterval(loadingInterval);
                 }
             }
-            
+
             function renderHooks(hooks) {
                 hooksOutput.innerHTML = '';
                 writePostButton.disabled = true;
                 selectedHook = '';
-                hooks.forEach((hookObj, index) => {
+                hooks.forEach((hook, index) => {
                     const hookEl = document.createElement('div');
                     hookEl.className = 'hook-card p-4 bg-slate-800/50 rounded-lg border border-slate-700 cursor-pointer';
-                    hookEl.textContent = hookObj.hook;
+                    hookEl.textContent = hook;
                     hookEl.dataset.index = index;
                     hookEl.onclick = () => {
-                        selectedHook = hookObj.hook;
+                        selectedHook = hook;
                         document.querySelectorAll('.hook-card').forEach(card => card.classList.remove('selected'));
                         hookEl.classList.add('selected');
                         writePostButton.disabled = false;
@@ -459,35 +531,25 @@
                 copyPostButton.textContent = 'Copied!';
                 setTimeout(() => { copyPostButton.textContent = 'Copy Post'; }, 2000);
             }
-
+            
             function extractJson(rawString) {
-                const startIndex = rawString.indexOf('[');
-                const endIndex = rawString.lastIndexOf(']');
-                if (startIndex === -1 || endIndex === -1) {
-                    const markdownMatch = rawString.match(/```json\s*([\s\S]*?)\s*```/);
-                    if (markdownMatch && markdownMatch[1]) {
-                        return extractJson(markdownMatch[1]);
-                    }
-                    throw new Error("No valid JSON array found in the AI response.");
+                const match = rawString.match(/(\[[\s\S]*\])/);
+                if (match && match[0]) {
+                    return match[0];
                 }
-                return rawString.substring(startIndex, endIndex + 1);
+                throw new Error("No valid JSON array found in the AI response.");
             }
 
-            async function callGemini(prompt, expectJson = false) {
+            // --- API Call Logic (Updated) ---
+            async function callApi(prompt, expectJson = false) {
                 const payload = { 
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: {
-                        "temperature": 0.7, "top_p": 0.9, "top_k": 40, "max_output_tokens": 1024,
-                    }
+                    prompt: prompt,
+                    expectJson: expectJson 
                 };
-                if (expectJson) {
-                    payload.generationConfig.responseMimeType = "application/json";
-                }
                 return await makeApiCall(payload);
             }
             
             async function makeApiCall(payload) {
-                [suggestTopicsButton, generateHooksButton, writePostButton].forEach(btn => btn.disabled = true);
                 const apiUrl = `https://roftx-1.onrender.com/api/gemini`;
                 try {
                     const response = await fetch(apiUrl, {
@@ -495,31 +557,29 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
+
                     if (!response.ok) {
                         const errorBody = await response.text();
-                        console.error("API Error Response:", errorBody);
-                        throw new Error(`API Error: ${response.statusText}`);
+                        throw new Error(`API Error: ${response.statusText} - ${errorBody}`);
                     }
+
                     const result = await response.json();
-                    if (result.candidates && result.candidates.length > 0 && result.candidates[0].content && result.candidates[0].content.parts[0].text) {
-                        return result.candidates[0].content.parts[0].text;
-                    } else {
-                        if (result.promptFeedback && result.promptFeedback.blockReason) {
-                            throw new Error(`Request blocked due to: ${result.promptFeedback.blockReason}`);
-                        }
-                        console.error("Unexpected API response structure:", result);
+                    
+                    if (result.text) {
+                        return result.text;
+                    } else if (result.error) {
+                         throw new Error(`AI Error: ${result.error.message}`);
+                    }
+                    else {
                         throw new Error("No content generated or unexpected response format.");
                     }
                 } catch (error) {
                     console.error("Full error during API call:", error);
                     throw error;
-                } finally {
-                    suggestTopicsButton.disabled = false;
-                    generateHooksButton.disabled = false;
-                    if(selectedHook) writePostButton.disabled = false;
                 }
             }
         });
     </script>
 </body>
 </html>
+
