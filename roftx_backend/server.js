@@ -20,7 +20,7 @@ const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
 const DATABASE_URL = process.env.DATABASE_URL;
 const DATABASE_PASSWORD = process.env.DATABASE_PASSWORD;
 const NODE_ENV = process.env.NODE_ENV || 'development';
-const PORT = process.env.PORT || 3000; x
+const PORT = process.env.PORT || 3000;
 
 // **CRITICAL SECURITY CHECK**
 if (!GOOGLE_CLIENT_ID || !CLAUDE_API_KEY) {
@@ -184,4 +184,3 @@ app.post('/api/gemini', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`🚀 RoftX backend server is running and listening on port ${PORT}`);
 });
-
