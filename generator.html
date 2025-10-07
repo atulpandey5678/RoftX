@@ -42,7 +42,7 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
         .hook-card.selected {
-            border-color: #6366f1; /* indigo-500 */
+            border-color: #6366f1;
             transform: translateY(-2px) scale(1.02);
             box-shadow: 0 0 0 2px #6366f1;
         }
@@ -82,17 +82,7 @@
                         </div>
                         <div class="mt-6">
                             <label for="style-input" class="block text-sm font-medium text-slate-300 mb-2">Paste previous post to capture your voice <span class="text-slate-400">(Recommended)</span></label>
-                            <div class="relative">
-                                <textarea id="style-input" rows="4" placeholder="Optional: The AI is sharpest with a sample of your writing..." class="focusable w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all"></textarea>
-                                <div class="absolute bottom-3 right-3">
-                                    <input type="file" id="style-file-upload" class="hidden" accept=".txt,.png,.jpg,.jpeg,.pdf,.docx">
-                                    <button id="style-upload-button" class="focusable flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-700 text-sm text-slate-200 hover:bg-slate-600 transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                                        Upload File
-                                    </button>
-                                </div>
-                            </div>
-                             <p id="style-file-status" class="text-xs text-slate-400 mt-2 h-4"></p>
+                            <textarea id="style-input" rows="4" placeholder="Optional: The AI is sharpest with a sample of your writing..." class="focusable w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all"></textarea>
                         </div>
                         <div class="text-center mt-8">
                             <button id="generate-hooks-button" class="focusable w-full sm:w-auto px-8 py-3 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-white font-semibold shadow-lg transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/50 disabled:opacity-50 disabled:cursor-wait">
@@ -177,6 +167,9 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- Configuration ---
+            const API_BASE_URL = 'https://roftx-1.onrender.com';
+            
             // --- Page Element Refs ---
             const initialState = document.getElementById('initial-state');
             const loadingState = document.getElementById('loading-state');
@@ -186,9 +179,6 @@
             const nicheInput = document.getElementById('niche-input');
             const topicInput = document.getElementById('topic-input');
             const styleInput = document.getElementById('style-input');
-            const styleFileUpload = document.getElementById('style-file-upload');
-            const styleUploadButton = document.getElementById('style-upload-button');
-            const styleFileStatus = document.getElementById('style-file-status');
             const suggestTopicsButton = document.getElementById('suggest-topics-button');
             const suggestedTopicsContainer = document.getElementById('suggested-topics-container');
             const generateHooksButton = document.getElementById('generate-hooks-button');
@@ -247,9 +237,6 @@
             }
 
             // --- Event Listeners ---
-            styleUploadButton.addEventListener('click', () => styleFileUpload.click());
-            styleFileUpload.addEventListener('change', (e) => handleFileUpload(e));
-            
             suggestTopicsButton.addEventListener('click', handleSuggestTopics);
             generateHooksButton.addEventListener('click', () => handleGenerateHooks());
             writePostButton.addEventListener('click', () => handleWritePost());
@@ -298,46 +285,6 @@
             });
 
             // --- Main Logic Functions ---
-            async function handleFileUpload(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-                styleFileStatus.textContent = `Processing ${file.name}...`;
-                styleInput.value = '';
-
-                const fileExtension = file.name.split('.').pop().toLowerCase();
-                
-                if (['png', 'jpg', 'jpeg'].includes(fileExtension)) {
-                    const reader = new FileReader();
-                    reader.onload = async (e) => {
-                        const base64Data = e.target.result.split(',')[1];
-                        try {
-                            const payload = {
-                                contents: [{
-                                    parts: [
-                                        { text: "Extract all text from this image. If there is no text, respond with an empty string." },
-                                        { inlineData: { mimeType: file.type, data: base64Data } }
-                                    ]
-                                }]
-                            };
-                            const extractedText = await makeApiCall(payload);
-                            styleInput.value = extractedText;
-                            styleFileStatus.textContent = `Successfully extracted text from ${file.name}.`;
-                        } catch (error) {
-                            console.error("Image processing failed:", error);
-                            styleFileStatus.textContent = `Error processing image: ${error.message}`;
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                } else if (['txt', 'pdf', 'docx'].includes(fileExtension)) {
-                    styleInput.value = `[Content from your document '${file.name}' will be used to analyze your style.]`;
-                    styleFileStatus.textContent = `${file.name} uploaded. The AI will analyze its content.`;
-                } else {
-                    alert("Unsupported file format.");
-                    styleFileStatus.textContent = "";
-                }
-                event.target.value = null;
-            }
-
             async function handleSuggestTopics(options = {}) {
                 const { instructions = '' } = options;
                 const niche = nicheInput.value.trim();
@@ -345,52 +292,49 @@
                     alert('Please enter your niche to get topic suggestions.');
                     return;
                 }
-                showState('loading-state');
-                loadingTitle.textContent = "Suggesting Topics...";
-                loadingText.textContent = "Analyzing the latest trends in your niche...";
+                
+                suggestTopicsButton.disabled = true;
+                suggestTopicsButton.textContent = 'Loading...';
 
-                // --- NEW, DETAILED PROMPT FOR TOPIC SUGGESTION ---
-                const prompt = `
-                    You are a professional LinkedIn content strategist who closely tracks emerging industry trends and audience engagement patterns.
-                    Niche: ${niche}
+                const prompt = `You are a professional LinkedIn content strategist who closely tracks emerging industry trends and audience engagement patterns.
+Niche: ${niche}
 
-                    🎯 Task:
-                    Generate exactly 5 fresh, trending, and discussion-worthy LinkedIn post ideas for this niche.
+🎯 Task:
+Generate exactly 5 fresh, trending, and discussion-worthy LinkedIn post ideas for this niche.
 
-                    Each idea must:
-                    - Have a short, catchy, and professional title (under 12 words)
-                    - Include a one-line summary (under 20 words) that explains the core insight or discussion angle
+Each idea must:
+- Have a short, catchy, and professional title (under 12 words)
+- Include a one-line summary (under 20 words) that explains the core insight or discussion angle
 
-                    💡 Output Format:
-                    Return only a valid JSON array of objects, where each object has a "title" and a "summary" key. Example:
-                    [
-                        {"title": "Title 1", "summary": "Summary 1"},
-                        {"title": "Title 2", "summary": "Summary 2"}
-                    ]
-                    IMPORTANT: Do not include any text outside the JSON array.
-                `;
+💡 Output Format:
+Return only a valid JSON array of objects, where each object has a "title" and a "summary" key. Example:
+[
+    {"title": "Title 1", "summary": "Summary 1"},
+    {"title": "Title 2", "summary": "Summary 2"}
+]
+IMPORTANT: Do not include any text outside the JSON array.`;
 
                 try {
-                    const rawResult = await callApi(prompt, true); // Expect JSON
+                    const rawResult = await callApi(prompt);
                     const jsonString = extractJson(rawResult);
                     const topics = JSON.parse(jsonString);
                     
-                    const topicsContainer = document.getElementById('suggested-topics-container');
-                    topicsContainer.innerHTML = ''; // Clear previous
+                    suggestedTopicsContainer.innerHTML = '';
                     
                     topics.forEach(topic => {
                         const button = document.createElement('button');
                         button.className = 'focusable bg-slate-800 text-slate-300 p-3 rounded-lg text-sm hover:bg-indigo-500 hover:text-white transition-colors text-left w-full';
                         button.innerHTML = `<strong class="block text-white">${topic.title}</strong><span class="text-xs text-slate-400">${topic.summary}</span>`;
-                        button.onclick = () => { document.getElementById('topic-input').value = topic.title; };
-                        topicsContainer.appendChild(button);
+                        button.onclick = () => { topicInput.value = topic.title; };
+                        suggestedTopicsContainer.appendChild(button);
                     });
-                    showState('initial-state');
                     
                 } catch (error) {
                     console.error("Topic suggestion failed:", error);
                     alert("Sorry, something went wrong while suggesting topics. Please try again.");
-                    showState('initial-state');
+                } finally {
+                    suggestTopicsButton.disabled = false;
+                    suggestTopicsButton.textContent = 'Suggest Topics';
                 }
             }
 
@@ -410,33 +354,30 @@
                     loadingText.textContent = hookLoadingMessages[messageIndex];
                 }, 2000);
 
-                // --- NEW, DETAILED PROMPT FOR HOOK GENERATION ---
-                const prompt = `
-                    You are HOOK-CRAFT AI, a viral LinkedIn hook strategist.
-                    Context
-                    Niche: ${nicheInput.value.trim()}
-                    Topic: ${topicInput.value.trim()}
-                    Previous posts inspiration:
-                    ${styleInput.value.trim() || 'Not provided'}
-                    Additional Instructions: ${instructions}
+                const prompt = `You are HOOK-CRAFT AI, a viral LinkedIn hook strategist.
+Context
+Niche: ${nicheInput.value.trim()}
+Topic: ${topicInput.value.trim()}
+Previous posts inspiration:
+${styleInput.value.trim() || 'Not provided'}
+Additional Instructions: ${instructions}
 
-                    Step 1 — Analyze Previous Hooks
-                    Study the user’s previous posts to identify voice, rhythm, and emotional triggers.
+Step 1 — Analyze Previous Hooks
+Study the user's previous posts to identify voice, rhythm, and emotional triggers.
 
-                    Step 2 — Use Hook Archetypes (for generation)
-                    Draw inspiration from archetypes like Contrarian, Vulnerable, Curiosity Gap, and Data Insight.
+Step 2 — Use Hook Archetypes (for generation)
+Draw inspiration from archetypes like Contrarian, Vulnerable, Curiosity Gap, and Data Insight.
 
-                    Step 3 — Output
-                    Generate exactly 3 hooks, each 4–10 words long, emotionally charged, and in the same style as the user's previous posts.
-                    
-                    💡 Output Format:
-                    Return only a valid JSON array of strings. Example:
-                    ["Hook 1", "Hook 2", "Hook 3"]
-                    IMPORTANT: Do not include any text outside the JSON array.
-                `;
+Step 3 — Output
+Generate exactly 3 hooks, each 4–10 words long, emotionally charged, and in the same style as the user's previous posts.
+
+💡 Output Format:
+Return only a valid JSON array of strings. Example:
+["Hook 1", "Hook 2", "Hook 3"]
+IMPORTANT: Do not include any text outside the JSON array.`;
                 
                 try {
-                    const rawResult = await callApi(prompt, true); // Expect JSON
+                    const rawResult = await callApi(prompt);
                     const jsonString = extractJson(rawResult);
                     const hooks = JSON.parse(jsonString);
                     renderHooks(hooks);
@@ -466,35 +407,32 @@
                     loadingText.textContent = postLoadingMessages[messageIndex];
                 }, 2000);
 
-                // --- NEW, DETAILED PROMPT FOR FULL POST GENERATION ---
-                const prompt = `
-                    You are LINKEDIN-POST-ARCHITECT, an elite ghostwriter.
-                    
-                    🧩 INPUT CONTEXT
-                    Selected Hook: ${selectedHook}
-                    Topic: ${topicInput.value.trim()}
-                    User Niche: ${nicheInput.value.trim()}
-                    Previous Posts: ${styleInput.value.trim() || 'Not provided'}
-                    User Instructions: ${instructions}
+                const prompt = `You are LINKEDIN-POST-ARCHITECT, an elite ghostwriter.
 
-                    ⚙️ STRUCTURE — E.N.G.A.G.E Framework (Condensed)
-                    - Emotional Opening: Start right after the hook with relatable context.
-                    - Narrative Arc: Share a challenge or tension.
-                    - Genuine Insight: Deliver a contrarian or data-driven learning.
-                    - Actionable Wisdom: Give 2–3 clear takeaways.
-                    - Growth Connection: Tie the insight to a broader principle.
-                    - Engagement Catalyst: End with a single sharp, specific question.
+🧩 INPUT CONTEXT
+Selected Hook: ${selectedHook}
+Topic: ${topicInput.value.trim()}
+User Niche: ${nicheInput.value.trim()}
+Previous Posts: ${styleInput.value.trim() || 'Not provided'}
+User Instructions: ${instructions}
 
-                    🧠 STYLE & FORMAT RULES
-                    - Voice: Match the user's tone, rhythm, and structure.
-                    - Length: 220–280 words in 4–6 short paragraphs (1–2 sentences each).
-                    - Hashtags: Include 3–4 high-volume tags, 1–2 niche tags, and #RoftX.
+⚙️ STRUCTURE — E.N.G.A.G.E Framework (Condensed)
+- Emotional Opening: Start right after the hook with relatable context.
+- Narrative Arc: Share a challenge or tension.
+- Genuine Insight: Deliver a contrarian or data-driven learning.
+- Actionable Wisdom: Give 2–3 clear takeaways.
+- Growth Connection: Tie the insight to a broader principle.
+- Engagement Catalyst: End with a single sharp, specific question.
 
-                    Write the complete post body starting immediately after the hook. Do not repeat the hook or add any explanatory text.
-                `;
+🧠 STYLE & FORMAT RULES
+- Voice: Match the user's tone, rhythm, and structure.
+- Length: 220–280 words in 4–6 short paragraphs (1–2 sentences each).
+- Hashtags: Include 3–4 high-volume tags, 1–2 niche tags, and #RoftX.
+
+Write the complete post body starting immediately after the hook. Do not repeat the hook or add any explanatory text.`;
                 
-                 try {
-                    const postBody = await callApi(prompt, false); // Expect Text
+                try {
+                    const postBody = await callApi(prompt);
                     postBodyOutput.value = `${selectedHook}\n\n${postBody}`;
                     showState('final-post-state');
                 } catch (error) {
@@ -502,7 +440,7 @@
                     alert("Sorry, something went wrong while writing the post. Please try again.");
                     showState('hooks-results-state');
                 } finally {
-                     clearInterval(loadingInterval);
+                    clearInterval(loadingInterval);
                 }
             }
 
@@ -540,38 +478,42 @@
                 throw new Error("No valid JSON array found in the AI response.");
             }
 
-            // --- API Call Logic (Updated) ---
-            async function callApi(prompt, expectJson = false) {
-                const payload = { 
-                    prompt: prompt,
-                    expectJson: expectJson 
+            // --- API Call Logic (FIXED to match server.js) ---
+            async function callApi(prompt) {
+                // Format payload to match what server.js expects (Gemini format)
+                const payload = {
+                    contents: [{
+                        parts: [{
+                            text: prompt
+                        }]
+                    }]
                 };
-                return await makeApiCall(payload);
-            }
-            
-            async function makeApiCall(payload) {
-                const apiUrl = `https://roftx-1.onrender.com/api/gemini`;
+
                 try {
-                    const response = await fetch(apiUrl, {
+                    const response = await fetch(`${API_BASE_URL}/api/gemini`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json'
+                        },
                         body: JSON.stringify(payload)
                     });
 
                     if (!response.ok) {
-                        const errorBody = await response.text();
-                        throw new Error(`API Error: ${response.statusText} - ${errorBody}`);
+                        const errorText = await response.text();
+                        console.error('API Error Response:', errorText);
+                        throw new Error(`API Error (${response.status}): ${response.statusText}`);
                     }
 
                     const result = await response.json();
                     
-                    if (result.text) {
-                        return result.text;
+                    // Extract text from Gemini-formatted response
+                    if (result.candidates && result.candidates[0]?.content?.parts?.[0]?.text) {
+                        return result.candidates[0].content.parts[0].text;
                     } else if (result.error) {
-                         throw new Error(`AI Error: ${result.error.message}`);
-                    }
-                    else {
-                        throw new Error("No content generated or unexpected response format.");
+                        throw new Error(`AI Error: ${result.error}`);
+                    } else {
+                        console.error('Unexpected response format:', result);
+                        throw new Error("Unexpected response format from API");
                     }
                 } catch (error) {
                     console.error("Full error during API call:", error);
@@ -582,4 +524,3 @@
     </script>
 </body>
 </html>
-
