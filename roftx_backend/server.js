@@ -1,35 +1,34 @@
-// server.js - Production Ready Version
+// server.js - Modern ES Module Version
 
-// 1. Load environment variables from the .env file
-// This line MUST be at the very top. It allows us to use a .env file for local development.
-require('dotenv').config();
+// 1. Load environment variables
+import 'dotenv/config';
 
-// 2. Import required dependencies
-const express = require('express');
-const cors = require('cors');
-const { Pool } = require('pg');
-const { OAuth2Client } = require('google-auth-library');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
+// 2. Import the tools we need using the modern 'import' syntax
+import express from 'express';
+import cors from 'cors';
+import pg from 'pg';
+import { OAuth2Client } from 'google-auth-library';
+import fetch from 'node-fetch';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
+const { Pool } = pg;
 
 // --- 3. Environment Variables & Security Check ---
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
-const DATABASE_URL = process.env.DATABASE_URL; // Provided by Render for production
-const DATABASE_PASSWORD = process.env.DATABASE_PASSWORD; // For local testing via .env
+const DATABASE_URL = process.env.DATABASE_URL;
+const DATABASE_PASSWORD = process.env.DATABASE_PASSWORD;
 const NODE_ENV = process.env.NODE_ENV || 'development';
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000; x
 
 // **CRITICAL SECURITY CHECK**
-// The server will refuse to start if any essential keys are missing.
 if (!GOOGLE_CLIENT_ID || !CLAUDE_API_KEY) {
-    console.error("❌ FATAL ERROR: Missing GOOGLE_CLIENT_ID or CLAUDE_API_KEY. Please check your Environment Variables.");
+    console.error("❌ FATAL ERROR: Missing GOOGLE_CLIENT_ID or CLAUDE_API_KEY");
     process.exit(1);
 }
 if (!DATABASE_URL && !DATABASE_PASSWORD) {
-    console.error("❌ FATAL ERROR: Missing DATABASE_URL (for production) or DATABASE_PASSWORD (for local). Please check your Environment Variables.");
+    console.error("❌ FATAL ERROR: Missing DATABASE_URL or DATABASE_PASSWORD");
     process.exit(1);
 }
 
@@ -39,42 +38,35 @@ const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 
 // --- 5. Security & Middleware Configuration ---
-
-// Basic security headers
 app.use(helmet());
 
-// CORS Configuration (The "Guest List")
 const allowedOrigins = [
-    'https://www.roftx.com',         // Your production domain
-    'http://localhost:8080',         // For local testing with live-server
-    'http://127.0.0.1:8080',         // Also for local testing
-    'http://127.0.0.1:5500',         // Another common live-server port
-    'http://127.0.0.1:5501'          // The port from your recent screenshot
+    'https://www.roftx.com',
+    'http://localhost:8080',
+    'http://127.0.0.1:8080',
+    'http://127.0.0.1:5500',
+    'http://127.0.0.1:5501'
 ];
 
 const corsOptions = {
     origin: function (origin, callback) {
-        // Allow requests if the origin is on our guest list, or if there's no origin (e.g., Postman)
         if (!origin || allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
-            console.warn(`⚠️  CORS blocked request from unapproved origin: ${origin}`);
+            console.warn(`⚠️  CORS blocked request from: ${origin}`);
             callback(new Error('Not allowed by CORS'));
         }
     }
 };
 app.use(cors(corsOptions));
-
-// JSON parsing
 app.use(express.json());
 
-// Rate Limiting to prevent abuse
 const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per window
-    message: 'Too many requests from this IP, please try again after 15 minutes.',
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: 'Too many requests from this IP, please try again later.',
 });
-app.use('/api/', apiLimiter); // Apply to all API routes
+app.use('/api/', apiLimiter);
 
 
 // --- 6. Database Connection ---
@@ -90,20 +82,16 @@ const pool = new Pool({
     ssl: DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 
-// Test the database connection on startup
 pool.query('SELECT NOW()')
     .then(res => console.log('✅ Database connected successfully at', res.rows[0].now))
     .catch(err => console.error('❌ Database connection failed:', err.stack));
 
 
 // --- 7. API Endpoints ---
-
-// Health Check Route
 app.get('/', (req, res) => {
     res.status(200).send('Welcome to the RoftX backend API! The server is running correctly.');
 });
 
-// Google Authentication Endpoint
 app.post('/api/auth/google', async (req, res) => {
     const { token } = req.body;
     if (!token) return res.status(400).json({ error: 'No token provided' });
@@ -113,7 +101,6 @@ app.post('/api/auth/google', async (req, res) => {
             idToken: token,
             audience: GOOGLE_CLIENT_ID,
         });
-
         const { sub: google_id, name: full_name, email, picture: picture_url, locale, given_name, family_name } = ticket.getPayload();
         
         let userResult = await pool.query('SELECT * FROM users WHERE google_id = $1', [google_id]);
@@ -140,7 +127,6 @@ app.post('/api/auth/google', async (req, res) => {
     }
 });
 
-// AI Generation Endpoint (Claude API)
 app.post('/api/gemini', async (req, res) => {
     if (!req.body || !req.body.contents) {
         return res.status(400).json({ error: 'Invalid request payload' });
@@ -177,7 +163,6 @@ app.post('/api/gemini', async (req, res) => {
 
         const generatedText = data.content[0].text;
 
-        // Re-format the response to match the Gemini structure the frontend expects
         const responseToFrontend = {
             candidates: [{
                 content: {
