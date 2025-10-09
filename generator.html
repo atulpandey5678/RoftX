@@ -359,7 +359,7 @@
                 `;
 
                 try {
-                    const rawResult = await callApi(prompt, true, 'haiku'); // Use Haiku for fast topic suggestions
+                    const rawResult = await callApi(prompt, true); // Expect JSON
                     const jsonString = extractJson(rawResult);
                     const topics = JSON.parse(jsonString);
                     
@@ -425,7 +425,7 @@
                 `;
                 
                 try {
-                    const rawResult = await callApi(prompt, true, 'haiku'); // Use Haiku for fast hook generation
+                    const rawResult = await callApi(prompt, true); // Expect JSON
                     const jsonString = extractJson(rawResult);
                     const hooks = JSON.parse(jsonString);
                     renderHooks(hooks);
@@ -475,15 +475,16 @@
                     - Engagement Catalyst: End with a single sharp, specific question.
 
                     🧠 STYLE & FORMAT RULES
+                    - Tone: Professional yet approachable, as if humanhas written it , not robotic 
                     - Voice: Match the user's tone, rhythm, and structure.
                     - Length: 220–280 words in 4–6 short paragraphs (1–2 sentences each).
-                    - Hashtags: Include 3–4 high-volume tags, 1–2 niche tags, and #RoftX.
+                    - Hashtags: Include 3–4 high-volume tags, 4  niche tags, and #RoftX.
 
-                    Write the complete post body starting immediately after the hook. Do not repeat the hook or add any explanatory text.
+                    Write the complete post body starting after the hook. Do not repeat the hook or add any explanatory text.
                 `;
                 
                  try {
-                    const postBody = await callApi(prompt, false, 'sonnet'); // Use Sonnet 3.5 for highest quality posts
+                    const postBody = await callApi(prompt);
                     postBodyOutput.value = `${selectedHook}\n\n${postBody}`;
                     showState('final-post-state');
                 } catch (error) {
@@ -548,12 +549,11 @@
             }
 
             // --- API Call Logic (Updated for Claude) ---
-            async function callApi(prompt, expectJson = false, modelType = 'haiku') {
-                const payload = {
-                    contents: [{ parts: [{ text: prompt }] }],
-                    model: modelType  // Specify which model to use: 'haiku' or 'sonnet'
+            async function callApi(prompt, expectJson = false) {
+                const payload = { 
+                    contents: [{ parts: [{ text: prompt }] }]
                 };
-
+                
                 return await makeApiCall(payload);
             }
 
