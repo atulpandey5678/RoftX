@@ -65,28 +65,40 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         async function handleCredentialResponse(response) {
           try {
             document.getElementById('welcome-message').textContent = 'Authenticating... Please wait.';
+
             // Send the credential to your backend for verification
             const serverResponse = await fetch('https://roftx-1.onrender.com/api/auth/google', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ token: response.credential }) // Supabase and Google libraries often use 'token'
+                body: JSON.stringify({ token: response.credential })
             });
 
             const data = await serverResponse.json();
 
+            console.log('Server response:', { ok: serverResponse.ok, status: serverResponse.status, data });
+
             if (serverResponse.ok && data.success === true) {
-                // Optionally store user data in sessionStorage
+                // Store user data in sessionStorage
                 sessionStorage.setItem('roftx_user', JSON.stringify(data.user));
-                window.location.href = 'generator.html';
+                document.getElementById('welcome-message').textContent = 'Success! Redirecting...';
+
+                // Small delay to show success message
+                setTimeout(() => {
+                    window.location.href = 'generator.html';
+                }, 500);
             } else {
-                alert(`Authentication failed: ${data.error || 'Unknown error'}`);
+                // Show specific error message
+                console.error('Authentication failed:', data);
+                const errorMsg = data.error || 'Unknown error occurred';
+                alert(`Authentication failed: ${errorMsg}\n\nPlease try again or contact support if the issue persists.`);
                 document.getElementById('welcome-message').textContent = 'Sign in to continue to the platform.';
             }
           } catch(err) {
-            alert('Error connecting to the backend. Please try again later.');
-            console.error(err);
+            // Network or parsing error
+            console.error('Connection error:', err);
+            alert('Error connecting to the server. Please check your internet connection and try again.');
             document.getElementById('welcome-message').textContent = 'Sign in to continue to the platform.';
           }
         }

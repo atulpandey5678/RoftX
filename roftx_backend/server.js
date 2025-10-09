@@ -116,30 +116,76 @@ app.post('/api/auth/google', async (req, res) => {
 
     try {
         // Step 2: Interact with the database
-        const { sub: google_id, name: full_name, email, picture: picture_url, locale, given_name, family_name } = ticket.getPayload();
-        
+        const payload = ticket.getPayload();
+        const google_id = payload.sub;
+        const email = payload.email;
+        const full_name = payload.name || email;
+        const picture_url = payload.picture || null;
+        const locale = payload.locale || 'en';
+        const given_name = payload.given_name || email.split('@')[0];
+        const family_name = payload.family_name || '';
+
+        console.log(`🔐 Processing authentication for: ${email}`);
+
         let userResult = await pool.query('SELECT * FROM users WHERE google_id = $1', [google_id]);
 
         if (userResult.rows.length === 0) {
-            console.log(`✨ New user signed up: ${email}`);
+            console.log(`✨ New user signing up: ${email}`);
+
+            // Try to create users table if it doesn't exist
+            try {
+                await pool.query(`
+                    CREATE TABLE IF NOT EXISTS users (
+                        id SERIAL PRIMARY KEY,
+                        google_id VARCHAR(255) UNIQUE NOT NULL,
+                        email VARCHAR(255) UNIQUE NOT NULL,
+                        full_name VARCHAR(255),
+                        given_name VARCHAR(255),
+                        family_name VARCHAR(255),
+                        picture_url TEXT,
+                        locale VARCHAR(10),
+                        last_login TIMESTAMP,
+                        created_at TIMESTAMP DEFAULT NOW()
+                    )
+                `);
+                console.log('✅ Users table verified/created');
+            } catch (tableError) {
+                console.warn('⚠️  Table creation check:', tableError.message);
+            }
+
             userResult = await pool.query(
-                `INSERT INTO users (google_id, email, full_name, given_name, family_name, picture_url, locale, last_login) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()) RETURNING *`,
+                `INSERT INTO users (google_id, email, full_name, given_name, family_name, picture_url, locale, last_login)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+                 RETURNING *`,
                 [google_id, email, full_name, given_name, family_name, picture_url, locale]
             );
+            console.log(`✅ New user created: ${email}`);
         } else {
             console.log(`👤 Returning user logged in: ${email}`);
             userResult = await pool.query(
                 `UPDATE users SET last_login = NOW(), full_name = $2, picture_url = $3 WHERE google_id = $1 RETURNING *`,
                 [google_id, full_name, picture_url]
             );
+            console.log(`✅ User updated: ${email}`);
         }
 
         res.status(200).json({ success: true, user: userResult.rows[0] });
 
     } catch (error) {
-        // **NEW: Specific error logging for database operations**
-        console.error('❌ Database query error during authentication:', error.message);
-        res.status(500).json({ error: 'Server error during authentication.' });
+        // Enhanced error logging for database operations
+        console.error('❌ Database query error during authentication:', {
+            message: error.message,
+            code: error.code,
+            detail: error.detail,
+            stack: NODE_ENV !== 'production' ? error.stack : undefined
+        });
+
+        // Return more specific error if available
+        const errorMessage = error.code === '42P01'
+            ? 'Database table not found. Please contact support.'
+            : 'Server error during authentication.';
+
+        res.status(500).json({ error: errorMessage });
     }
 });
 
