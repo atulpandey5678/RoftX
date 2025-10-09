@@ -42,10 +42,13 @@ app.use(helmet());
 // 6. CORS Configuration
 const allowedOrigins = [
     'https://www.roftx.com',
+    'https://roftx.com',
     'http://localhost:8080',
     'http://127.0.0.1:8080',
     'http://127.0.0.1:5500',
-    'http://127.0.0.1:5501'
+    'http://127.0.0.1:5501',
+    'http://localhost:5500',
+    'http://localhost:5501'
 ];
 
 const corsOptions = {
@@ -142,21 +145,53 @@ app.post('/api/auth/google', async (req, res) => {
 
 // 11. AI Generation Endpoint (Claude API)
 app.post('/api/gemini', async (req, res) => {
+    // Enhanced request validation
     if (!req.body || !req.body.contents) {
+        console.warn('❌ Invalid request: Missing payload');
         return res.status(400).json({ error: 'Invalid request payload' });
+    }
+
+    if (!req.body.contents[0] || !req.body.contents[0].parts || !req.body.contents[0].parts[0] || !req.body.contents[0].parts[0].text) {
+        console.warn('❌ Invalid request: Malformed content structure');
+        return res.status(400).json({ error: 'Invalid content structure' });
     }
 
     try {
         const prompt = req.body.contents[0].parts[0].text;
-        const apiUrl = 'https://api.anthropic.com/v1/messages';
-        const model = "claude-3-haiku-20240307";
+        const requestedModel = req.body.model || 'haiku'; // Default to haiku for backwards compatibility
 
+        // Validate prompt length (Claude's limit is 200k tokens, roughly ~800k characters)
+        if (prompt.length > 100000) {
+            console.warn('❌ Prompt too long:', prompt.length, 'characters');
+            return res.status(400).json({ error: 'Prompt exceeds maximum length' });
+        }
+
+        // Model mapping for different use cases
+        const modelMap = {
+            'haiku': 'claude-3-5-haiku-20241022',        // Fast, lightweight - for hooks & topics
+            'sonnet': 'claude-3-5-sonnet-20241022',      // Best quality - for full posts
+            'haiku-legacy': 'claude-3-haiku-20240307'    // Legacy fallback
+        };
+
+        // Token limits based on model complexity
+        const maxTokensMap = {
+            'haiku': 2048,      // Hooks and topics need less tokens
+            'sonnet': 4096,     // Full posts need more tokens
+            'haiku-legacy': 1024
+        };
+
+        const selectedModel = modelMap[requestedModel] || modelMap['haiku'];
+        const maxTokens = maxTokensMap[requestedModel] || maxTokensMap['haiku'];
+
+        const apiUrl = 'https://api.anthropic.com/v1/messages';
         const claudePayload = {
-            model: model,
-            max_tokens: 1024,
+            model: selectedModel,
+            max_tokens: maxTokens,
             temperature: 0.7,
             messages: [{ role: "user", content: prompt }]
         };
+
+        console.log(`🤖 Using model: ${selectedModel} for ${requestedModel} request`);
 
         const claudeResponse = await fetch(apiUrl, {
             method: 'POST',
@@ -171,11 +206,42 @@ app.post('/api/gemini', async (req, res) => {
         const data = await claudeResponse.json();
 
         if (!claudeResponse.ok) {
-            console.error('❌ Claude API error:', data);
-            return res.status(claudeResponse.status).json({ error: data.error?.message || 'AI service error' });
+            // Enhanced error logging with more context
+            console.error('❌ Claude API error:', {
+                status: claudeResponse.status,
+                statusText: claudeResponse.statusText,
+                error: data.error,
+                model: selectedModel,
+                requestedModel: requestedModel
+            });
+
+            // Return appropriate error based on status code
+            const statusCode = claudeResponse.status;
+            if (statusCode === 429) {
+                return res.status(429).json({ error: 'Rate limit exceeded. Please try again in a moment.' });
+            } else if (statusCode === 401) {
+                return res.status(500).json({ error: 'API authentication error. Please contact support.' });
+            } else if (statusCode === 400) {
+                return res.status(400).json({ error: 'Invalid request format. Please try again.' });
+            }
+
+            return res.status(statusCode).json({ error: data.error?.message || 'AI service error' });
+        }
+
+        // Validate response structure
+        if (!data.content || !data.content[0] || !data.content[0].text) {
+            console.error('❌ Invalid Claude API response structure:', data);
+            return res.status(500).json({ error: 'Invalid AI response format' });
         }
 
         const generatedText = data.content[0].text;
+
+        // Log successful generation (without exposing content in production)
+        if (NODE_ENV !== 'production') {
+            console.log(`✅ Generated ${generatedText.length} characters using ${selectedModel}`);
+        } else {
+            console.log(`✅ Request completed successfully with ${selectedModel}`);
+        }
 
         const responseToFrontend = {
             candidates: [{
@@ -188,14 +254,68 @@ app.post('/api/gemini', async (req, res) => {
         res.status(200).json(responseToFrontend);
 
     } catch (error) {
-        console.error(`❌ AI endpoint error:`, error.message);
-        res.status(500).json({ error: 'Internal server error' });
+        // Enhanced error logging
+        console.error(`❌ AI endpoint error:`, {
+            message: error.message,
+            stack: NODE_ENV !== 'production' ? error.stack : undefined,
+            requestedModel: req.body?.model
+        });
+
+        // Don't expose internal errors in production
+        if (NODE_ENV === 'production') {
+            res.status(500).json({ error: 'An error occurred while processing your request. Please try again.' });
+        } else {
+            res.status(500).json({ error: 'Internal server error', details: error.message });
+        }
     }
 });
 
 
-// 12. Start the Server
-app.listen(PORT, () => {
-    console.log(`🚀 RoftX backend server is running and listening on port ${PORT}`);
+// 12. 404 Handler for undefined routes
+app.use((req, res) => {
+    console.warn(`⚠️  404 Not Found: ${req.method} ${req.url}`);
+    res.status(404).json({ error: 'Endpoint not found' });
+});
+
+// 13. Global Error Handler
+app.use((err, req, res, next) => {
+    console.error('❌ Unhandled error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+});
+
+// 14. Start the Server
+const server = app.listen(PORT, () => {
+    console.log(`\n${'='.repeat(50)}`);
+    console.log(`🚀 RoftX Backend Server`);
+    console.log(`${'='.repeat(50)}`);
+    console.log(`Environment: ${NODE_ENV}`);
+    console.log(`Port: ${PORT}`);
+    console.log(`Status: Running`);
+    console.log(`AI Models: Claude 3.5 Haiku & Sonnet`);
+    console.log(`Time: ${new Date().toISOString()}`);
+    console.log(`${'='.repeat(50)}\n`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+    console.log('\n⚠️  SIGTERM received. Starting graceful shutdown...');
+    server.close(() => {
+        console.log('✅ Server closed');
+        pool.end(() => {
+            console.log('✅ Database pool closed');
+            process.exit(0);
+        });
+    });
+});
+
+process.on('SIGINT', () => {
+    console.log('\n⚠️  SIGINT received. Starting graceful shutdown...');
+    server.close(() => {
+        console.log('✅ Server closed');
+        pool.end(() => {
+            console.log('✅ Database pool closed');
+            process.exit(0);
+        });
+    });
 });
 
