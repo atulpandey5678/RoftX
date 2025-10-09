@@ -73,21 +73,39 @@ const apiLimiter = rateLimit({
 app.use('/api/', apiLimiter);
 
 // 8. Database Connection
-const pool = new Pool({
-    connectionString: DATABASE_URL,
-    ...(!DATABASE_URL && {
-        user: 'postgres',
-        host: 'localhost',
-        database: 'roftx_db',
-        password: DATABASE_PASSWORD,
-        port: 5432,
-    }),
-    ssl: DATABASE_URL ? { rejectUnauthorized: false } : false,
-});
+let pool;
+let isDatabaseAvailable = false;
 
-pool.query('SELECT NOW()')
-    .then(res => console.log('✅ Database connected successfully at', res.rows[0].now))
-    .catch(err => console.error('❌ Database connection failed:', err.stack));
+try {
+    pool = new Pool({
+        connectionString: DATABASE_URL,
+        ...(!DATABASE_URL && {
+            user: 'postgres',
+            host: 'localhost',
+            database: 'roftx_db',
+            password: DATABASE_PASSWORD,
+            port: 5432,
+        }),
+        ssl: DATABASE_URL ? { rejectUnauthorized: false } : false,
+        connectionTimeoutMillis: 5000, // 5 second timeout
+    });
+
+    // Test database connection
+    pool.query('SELECT NOW()')
+        .then(res => {
+            console.log('✅ Database connected successfully at', res.rows[0].now);
+            isDatabaseAvailable = true;
+        })
+        .catch(err => {
+            console.error('❌ Database connection failed:', err.message);
+            console.warn('⚠️  Running in NO-DATABASE mode. Authentication will work but user data won\'t be saved.');
+            isDatabaseAvailable = false;
+        });
+} catch (err) {
+    console.error('❌ Failed to initialize database pool:', err.message);
+    console.warn('⚠️  Running in NO-DATABASE mode.');
+    isDatabaseAvailable = false;
+}
 
 // --- API Endpoints ---
 
@@ -115,7 +133,7 @@ app.post('/api/auth/google', async (req, res) => {
     }
 
     try {
-        // Step 2: Interact with the database
+        // Step 2: Extract user information from Google
         const payload = ticket.getPayload();
         const google_id = payload.sub;
         const email = payload.email;
@@ -127,65 +145,86 @@ app.post('/api/auth/google', async (req, res) => {
 
         console.log(`🔐 Processing authentication for: ${email}`);
 
-        let userResult = await pool.query('SELECT * FROM users WHERE google_id = $1', [google_id]);
+        // Create user object
+        const user = {
+            google_id,
+            email,
+            full_name,
+            given_name,
+            family_name,
+            picture_url,
+            locale,
+            last_login: new Date().toISOString()
+        };
 
-        if (userResult.rows.length === 0) {
-            console.log(`✨ New user signing up: ${email}`);
-
-            // Try to create users table if it doesn't exist
+        // If database is available, save user data
+        if (isDatabaseAvailable && pool) {
             try {
-                await pool.query(`
-                    CREATE TABLE IF NOT EXISTS users (
-                        id SERIAL PRIMARY KEY,
-                        google_id VARCHAR(255) UNIQUE NOT NULL,
-                        email VARCHAR(255) UNIQUE NOT NULL,
-                        full_name VARCHAR(255),
-                        given_name VARCHAR(255),
-                        family_name VARCHAR(255),
-                        picture_url TEXT,
-                        locale VARCHAR(10),
-                        last_login TIMESTAMP,
-                        created_at TIMESTAMP DEFAULT NOW()
-                    )
-                `);
-                console.log('✅ Users table verified/created');
-            } catch (tableError) {
-                console.warn('⚠️  Table creation check:', tableError.message);
-            }
+                let userResult = await pool.query('SELECT * FROM users WHERE google_id = $1', [google_id]);
 
-            userResult = await pool.query(
-                `INSERT INTO users (google_id, email, full_name, given_name, family_name, picture_url, locale, last_login)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-                 RETURNING *`,
-                [google_id, email, full_name, given_name, family_name, picture_url, locale]
-            );
-            console.log(`✅ New user created: ${email}`);
+                if (userResult.rows.length === 0) {
+                    console.log(`✨ New user signing up: ${email}`);
+
+                    // Try to create users table if it doesn't exist
+                    try {
+                        await pool.query(`
+                            CREATE TABLE IF NOT EXISTS users (
+                                id SERIAL PRIMARY KEY,
+                                google_id VARCHAR(255) UNIQUE NOT NULL,
+                                email VARCHAR(255) UNIQUE NOT NULL,
+                                full_name VARCHAR(255),
+                                given_name VARCHAR(255),
+                                family_name VARCHAR(255),
+                                picture_url TEXT,
+                                locale VARCHAR(10),
+                                last_login TIMESTAMP,
+                                created_at TIMESTAMP DEFAULT NOW()
+                            )
+                        `);
+                        console.log('✅ Users table verified/created');
+                    } catch (tableError) {
+                        console.warn('⚠️  Table creation check:', tableError.message);
+                    }
+
+                    userResult = await pool.query(
+                        `INSERT INTO users (google_id, email, full_name, given_name, family_name, picture_url, locale, last_login)
+                         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+                         RETURNING *`,
+                        [google_id, email, full_name, given_name, family_name, picture_url, locale]
+                    );
+                    user.id = userResult.rows[0].id;
+                    console.log(`✅ New user created in DB: ${email}`);
+                } else {
+                    console.log(`👤 Returning user logged in: ${email}`);
+                    userResult = await pool.query(
+                        `UPDATE users SET last_login = NOW(), full_name = $2, picture_url = $3 WHERE google_id = $1 RETURNING *`,
+                        [google_id, full_name, picture_url]
+                    );
+                    user.id = userResult.rows[0].id;
+                    console.log(`✅ User updated in DB: ${email}`);
+                }
+            } catch (dbError) {
+                // Database error, but authentication still succeeds
+                console.error('⚠️  Database error (non-fatal):', dbError.message);
+                console.log('✅ Authentication succeeded without database');
+            }
         } else {
-            console.log(`👤 Returning user logged in: ${email}`);
-            userResult = await pool.query(
-                `UPDATE users SET last_login = NOW(), full_name = $2, picture_url = $3 WHERE google_id = $1 RETURNING *`,
-                [google_id, full_name, picture_url]
-            );
-            console.log(`✅ User updated: ${email}`);
+            // No database available - authentication still works
+            console.log('✅ Authentication succeeded (no database)');
         }
 
-        res.status(200).json({ success: true, user: userResult.rows[0] });
+        res.status(200).json({ success: true, user });
 
     } catch (error) {
-        // Enhanced error logging for database operations
-        console.error('❌ Database query error during authentication:', {
+        // Enhanced error logging for unexpected errors
+        console.error('❌ Unexpected error during authentication:', {
             message: error.message,
             code: error.code,
             detail: error.detail,
             stack: NODE_ENV !== 'production' ? error.stack : undefined
         });
 
-        // Return more specific error if available
-        const errorMessage = error.code === '42P01'
-            ? 'Database table not found. Please contact support.'
-            : 'Server error during authentication.';
-
-        res.status(500).json({ error: errorMessage });
+        res.status(500).json({ error: 'Server error during authentication.' });
     }
 });
 
@@ -347,10 +386,14 @@ process.on('SIGTERM', () => {
     console.log('\n⚠️  SIGTERM received. Starting graceful shutdown...');
     server.close(() => {
         console.log('✅ Server closed');
-        pool.end(() => {
-            console.log('✅ Database pool closed');
+        if (pool && isDatabaseAvailable) {
+            pool.end(() => {
+                console.log('✅ Database pool closed');
+                process.exit(0);
+            });
+        } else {
             process.exit(0);
-        });
+        }
     });
 });
 
@@ -358,10 +401,14 @@ process.on('SIGINT', () => {
     console.log('\n⚠️  SIGINT received. Starting graceful shutdown...');
     server.close(() => {
         console.log('✅ Server closed');
-        pool.end(() => {
-            console.log('✅ Database pool closed');
+        if (pool && isDatabaseAvailable) {
+            pool.end(() => {
+                console.log('✅ Database pool closed');
+                process.exit(0);
+            });
+        } else {
             process.exit(0);
-        });
+        }
     });
 });
 
