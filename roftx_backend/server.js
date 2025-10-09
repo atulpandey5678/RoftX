@@ -255,17 +255,25 @@ app.post('/api/gemini', async (req, res) => {
         const modelMap = {
             'haiku': 'claude-3-5-haiku-20241022',        // Fast, lightweight - for hooks & topics
             'sonnet': 'claude-3-5-sonnet-20241022',      // Best quality - for full posts
+            'sonnet-latest': 'claude-3-5-sonnet-20241022', // Alias for latest
             'haiku-legacy': 'claude-3-haiku-20240307'    // Legacy fallback
         };
+
+        // Validate model exists
+        const selectedModel = modelMap[requestedModel];
+        if (!selectedModel) {
+            console.error(`❌ Invalid model requested: ${requestedModel}`);
+            return res.status(400).json({ error: `Invalid model: ${requestedModel}. Available: haiku, sonnet` });
+        }
 
         // Token limits based on model complexity
         const maxTokensMap = {
             'haiku': 2048,      // Hooks and topics need less tokens
             'sonnet': 4096,     // Full posts need more tokens
+            'sonnet-latest': 4096,
             'haiku-legacy': 1024
         };
 
-        const selectedModel = modelMap[requestedModel] || modelMap['haiku'];
         const maxTokens = maxTokensMap[requestedModel] || maxTokensMap['haiku'];
 
         const apiUrl = 'https://api.anthropic.com/v1/messages';

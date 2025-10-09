@@ -359,7 +359,7 @@
                 `;
 
                 try {
-                    const rawResult = await callApi(prompt, true); // Expect JSON
+                    const rawResult = await callApi(prompt, true, 'haiku'); // Use Haiku for fast topic suggestions
                     const jsonString = extractJson(rawResult);
                     const topics = JSON.parse(jsonString);
                     
@@ -425,7 +425,7 @@
                 `;
                 
                 try {
-                    const rawResult = await callApi(prompt, true); // Expect JSON
+                    const rawResult = await callApi(prompt, true, 'haiku'); // Use Haiku for fast hook generation
                     const jsonString = extractJson(rawResult);
                     const hooks = JSON.parse(jsonString);
                     renderHooks(hooks);
@@ -484,7 +484,7 @@
                 `;
                 
                  try {
-                    const postBody = await callApi(prompt);
+                    const postBody = await callApi(prompt, false, 'sonnet'); // Use Sonnet 3.5 for highest quality posts
                     postBodyOutput.value = `${selectedHook}\n\n${postBody}`;
                     showState('final-post-state');
                 } catch (error) {
@@ -549,40 +549,51 @@
             }
 
             // --- API Call Logic (Updated for Claude) ---
-            async function callApi(prompt, expectJson = false) {
-                const payload = { 
-                    contents: [{ parts: [{ text: prompt }] }]
+            async function callApi(prompt, expectJson = false, modelType = 'haiku') {
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    model: modelType  // Specify which model to use: 'haiku' or 'sonnet'
                 };
-                
+
                 return await makeApiCall(payload);
             }
 
             async function makeApiCall(payload) {
                 const apiUrl = `https://roftx-1.onrender.com/api/gemini`;
                 try {
+                    console.log('📤 API Request:', { model: payload.model, promptLength: payload.contents[0].parts[0].text.length });
+
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
 
+                    console.log('📥 API Response:', { ok: response.ok, status: response.status, statusText: response.statusText });
+
                     if (!response.ok) {
                         const errorBody = await response.text();
+                        console.error('❌ API Error Body:', errorBody);
                         throw new Error(`API Error: ${response.statusText} - ${errorBody}`);
                     }
 
                     const result = await response.json();
-                    
-                    if (result.candidates && result.candidates[0].content.parts[0].text) {
-                        return result.candidates[0].content.parts[0].text;
+                    console.log('✅ API Result:', { hasCandidates: !!result.candidates, hasError: !!result.error });
+
+                    if (result.candidates && result.candidates[0] && result.candidates[0].content && result.candidates[0].content.parts && result.candidates[0].content.parts[0] && result.candidates[0].content.parts[0].text) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        console.log('✅ Generated text length:', text.length);
+                        return text;
                     } else if (result.error) {
-                         throw new Error(`AI Error: ${result.error.message}`);
+                         console.error('❌ AI Error:', result.error);
+                         throw new Error(`AI Error: ${result.error.message || JSON.stringify(result.error)}`);
                     }
                     else {
+                        console.error('❌ Unexpected response format:', result);
                         throw new Error("No content generated or unexpected response format.");
                     }
                 } catch (error) {
-                    console.error("Full error during API call:", error);
+                    console.error("❌ Full error during API call:", error);
                     throw error;
                 }
             }
