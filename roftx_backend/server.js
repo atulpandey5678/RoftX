@@ -1,9 +1,9 @@
-// server.js - Modern ES Module Version
+// server.js - Production Ready Version
 
-// 1. Load environment variables
+// 1. Load environment variables from the .env file
 import 'dotenv/config';
 
-// 2. Import the tools we need using the modern 'import' syntax
+// 2. Import required dependencies
 import express from 'express';
 import cors from 'cors';
 import pg from 'pg';
@@ -36,10 +36,10 @@ if (!DATABASE_URL && !DATABASE_PASSWORD) {
 const app = express();
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
-
-// --- 5. Security & Middleware Configuration ---
+// 5. Security Middleware
 app.use(helmet());
 
+// 6. CORS Configuration
 const allowedOrigins = [
     'https://www.roftx.com',
     'http://localhost:8080',
@@ -61,6 +61,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// 7. Rate Limiting
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
@@ -68,8 +69,7 @@ const apiLimiter = rateLimit({
 });
 app.use('/api/', apiLimiter);
 
-
-// --- 6. Database Connection ---
+// 8. Database Connection
 const pool = new Pool({
     connectionString: DATABASE_URL,
     ...(!DATABASE_URL && {
@@ -86,21 +86,33 @@ pool.query('SELECT NOW()')
     .then(res => console.log('✅ Database connected successfully at', res.rows[0].now))
     .catch(err => console.error('❌ Database connection failed:', err.stack));
 
+// --- API Endpoints ---
 
-// --- 7. API Endpoints ---
+// 9. Health Check Route
 app.get('/', (req, res) => {
     res.status(200).send('Welcome to the RoftX backend API! The server is running correctly.');
 });
 
+// 10. Google Authentication Endpoint
 app.post('/api/auth/google', async (req, res) => {
     const { token } = req.body;
     if (!token) return res.status(400).json({ error: 'No token provided' });
 
+    let ticket;
     try {
-        const ticket = await client.verifyIdToken({
+        // Step 1: Verify the token with Google
+        ticket = await client.verifyIdToken({
             idToken: token,
             audience: GOOGLE_CLIENT_ID,
         });
+    } catch (error) {
+        // **NEW: Specific error logging for token verification**
+        console.error('❌ Google token verification error:', error.message);
+        return res.status(401).json({ error: 'Invalid Google token. Please sign in again.' });
+    }
+
+    try {
+        // Step 2: Interact with the database
         const { sub: google_id, name: full_name, email, picture: picture_url, locale, given_name, family_name } = ticket.getPayload();
         
         let userResult = await pool.query('SELECT * FROM users WHERE google_id = $1', [google_id]);
@@ -122,11 +134,13 @@ app.post('/api/auth/google', async (req, res) => {
         res.status(200).json({ success: true, user: userResult.rows[0] });
 
     } catch (error) {
-        console.error('❌ Google auth error:', error.message);
-        res.status(500).json({ error: 'Authentication failed' });
+        // **NEW: Specific error logging for database operations**
+        console.error('❌ Database query error during authentication:', error.message);
+        res.status(500).json({ error: 'Server error during authentication.' });
     }
 });
 
+// 11. AI Generation Endpoint (Claude API)
 app.post('/api/gemini', async (req, res) => {
     if (!req.body || !req.body.contents) {
         return res.status(400).json({ error: 'Invalid request payload' });
@@ -180,7 +194,8 @@ app.post('/api/gemini', async (req, res) => {
 });
 
 
-// --- 8. Start the Server ---
+// 12. Start the Server
 app.listen(PORT, () => {
     console.log(`🚀 RoftX backend server is running and listening on port ${PORT}`);
 });
+

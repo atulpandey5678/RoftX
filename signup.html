@@ -75,9 +75,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             });
 
             const data = await serverResponse.json();
-            
-            if (serverResponse.ok && data.message === "Login successful!") {
-                // Optionally store a session token, etc.
+
+            if (serverResponse.ok && data.success === true) {
+                // Optionally store user data in sessionStorage
+                sessionStorage.setItem('roftx_user', JSON.stringify(data.user));
                 window.location.href = 'generator.html';
             } else {
                 alert(`Authentication failed: ${data.error || 'Unknown error'}`);
