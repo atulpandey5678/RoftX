@@ -60,49 +60,35 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
 
     <script>
-        // --- Google Auth Callback ---
-        // This function is called by the Google library after a successful sign-in.
-        async function handleCredentialResponse(response) {
-          try {
-            document.getElementById('welcome-message').textContent = 'Authenticating... Please wait.';
+    async function handleCredentialResponse(response) {
+      try {
+        document.getElementById('welcome-message').textContent = 'Authenticating... Please wait.';
+        
+        const serverResponse = await fetch('https://roftx-1.onrender.com/api/auth/google', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ token: response.credential })
+        });
 
-            // Send the credential to your backend for verification
-            const serverResponse = await fetch('https://roftx-1.onrender.com/api/auth/google', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ token: response.credential })
-            });
-
-            const data = await serverResponse.json();
-
-            console.log('Server response:', { ok: serverResponse.ok, status: serverResponse.status, data });
-
-            if (serverResponse.ok && data.success === true) {
-                // Store user data in sessionStorage
-                sessionStorage.setItem('roftx_user', JSON.stringify(data.user));
-                document.getElementById('welcome-message').textContent = 'Success! Redirecting...';
-
-                // Small delay to show success message
-                setTimeout(() => {
-                    window.location.href = 'generator.html';
-                }, 500);
-            } else {
-                // Show specific error message
-                console.error('Authentication failed:', data);
-                const errorMsg = data.error || 'Unknown error occurred';
-                alert(`Authentication failed: ${errorMsg}\n\nPlease try again or contact support if the issue persists.`);
-                document.getElementById('welcome-message').textContent = 'Sign in to continue to the platform.';
-            }
-          } catch(err) {
-            // Network or parsing error
-            console.error('Connection error:', err);
-            alert('Error connecting to the server. Please check your internet connection and try again.');
+        const data = await serverResponse.json();
+        
+        // Fixed: Check for success property instead of message
+        if (serverResponse.ok && data.success === true) {
+            console.log('Login successful!', data.user);
+            window.location.href = 'generator.html';
+        } else {
+            alert(`Authentication failed: ${data.error || 'Unknown error'}`);
             document.getElementById('welcome-message').textContent = 'Sign in to continue to the platform.';
-          }
         }
-    </script>
+      } catch(err) {
+        alert('Error connecting to the backend. Please try again later.');
+        console.error(err);
+        document.getElementById('welcome-message').textContent = 'Sign in to continue to the platform.';
+      }
+    }
+</script>
 
 </body>
 </html>
