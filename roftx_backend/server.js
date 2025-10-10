@@ -251,12 +251,13 @@ app.post('/api/gemini', async (req, res) => {
             return res.status(400).json({ error: 'Prompt exceeds maximum length' });
         }
 
-        // Model mapping for different use cases
+        // Model mapping for different use cases - OFFICIAL ANTHROPIC MODEL NAMES
         const modelMap = {
-            'haiku': 'claude-3-5-haiku-20241022',        // Fast, lightweight - for hooks & topics
-            'sonnet': 'claude-3-5-sonnet-20241022',      // Best quality - for full posts
-            'sonnet-latest': 'claude-3-5-sonnet-20241022', // Alias for latest
-            'haiku-legacy': 'claude-3-haiku-20240307'    // Legacy fallback
+            'haiku': 'claude-3-5-haiku-20241022',        // Claude 3.5 Haiku (Oct 22, 2024)
+            'sonnet': 'claude-3-5-sonnet-20240620',      // Claude 3.5 Sonnet (June 20, 2024) - STABLE ✅
+            'sonnet-oct': 'claude-3-5-sonnet-20241022',  // Claude 3.5 Sonnet (Oct 22, 2024) - May not be available yet
+            'haiku-legacy': 'claude-3-haiku-20240307',   // Claude 3 Haiku (March 7, 2024)
+            'sonnet-legacy': 'claude-3-sonnet-20240229'  // Claude 3 Sonnet (Feb 29, 2024)
         };
 
         // Validate model exists
@@ -268,10 +269,11 @@ app.post('/api/gemini', async (req, res) => {
 
         // Token limits based on model complexity
         const maxTokensMap = {
-            'haiku': 2048,      // Hooks and topics need less tokens
-            'sonnet': 4096,     // Full posts need more tokens
-            'sonnet-latest': 4096,
-            'haiku-legacy': 1024
+            'haiku': 2048,           // Hooks and topics need less tokens
+            'sonnet': 4096,          // Full posts need more tokens
+            'sonnet-oct': 4096,      // October 2024 version
+            'haiku-legacy': 1024,    // Legacy models
+            'sonnet-legacy': 2048    // Legacy models
         };
 
         const maxTokens = maxTokensMap[requestedModel] || maxTokensMap['haiku'];

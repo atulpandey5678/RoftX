@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test RoftX API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover { background: #45a049; }
+        #output {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+    </style>
+</head>
+<body>
+    <h1>RoftX API Test</h1>
+    <p>Test which models work on your deployed server:</p>
+
+    <button onclick="testModel('haiku')">Test Haiku</button>
+    <button onclick="testModel('sonnet')">Test Sonnet</button>
+    <button onclick="testModel('invalid')">Test Invalid Model</button>
+
+    <div id="output">Waiting for test...</div>
+
+    <script>
+        async function testModel(modelType) {
+            const output = document.getElementById('output');
+            output.innerHTML = `🧪 Testing model: ${modelType}...\n\n`;
+
+            try {
+                const payload = {
+                    contents: [{
+                        parts: [{
+                            text: "Write a short LinkedIn post about testing APIs. Keep it under 50 words."
+                        }]
+                    }],
+                    model: modelType
+                };
+
+                output.innerHTML += `📤 Sending request to: https://roftx-1.onrender.com/api/gemini\n`;
+                output.innerHTML += `📦 Payload: ${JSON.stringify(payload, null, 2)}\n\n`;
+
+                const response = await fetch('https://roftx-1.onrender.com/api/gemini', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                output.innerHTML += `📥 Response Status: ${response.status} ${response.statusText}\n`;
+                output.innerHTML += `📥 Response OK: ${response.ok}\n\n`;
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    output.innerHTML += `<span class="success">✅ SUCCESS!</span>\n\n`;
+                    output.innerHTML += `Full Response:\n${JSON.stringify(result, null, 2)}\n\n`;
+
+                    if (result.candidates && result.candidates[0]?.content?.parts?.[0]?.text) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        output.innerHTML += `\n📝 Generated Text (${text.length} chars):\n`;
+                        output.innerHTML += `"${text}"\n`;
+                    }
+                } else {
+                    output.innerHTML += `<span class="error">❌ FAILED!</span>\n\n`;
+                    output.innerHTML += `Error Response:\n${JSON.stringify(result, null, 2)}\n`;
+                }
+
+            } catch (error) {
+                output.innerHTML += `<span class="error">❌ ERROR!</span>\n\n`;
+                output.innerHTML += `${error.message}\n`;
+                output.innerHTML += `${error.stack}\n`;
+            }
+        }
+    </script>
+</body>
+</html>
