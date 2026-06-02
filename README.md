@@ -1,5 +1,7 @@
 # RoftX — AI LinkedIn Post Generator
 
+link :https://www.roftx.com/
+
 RoftX is a premium AI-powered LinkedIn personal branding tool. Generate scroll-stopping posts in 60 seconds using the E.N.G.A.G.E framework.
 
 ## Tech Stack
