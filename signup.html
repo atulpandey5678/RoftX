@@ -109,9 +109,11 @@
   </script>
 
   <script>
-    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    // ⚙️  PRODUCTION: Update this URL after deploying your backend
+    const PROD_API = 'https://roftx-api.onrender.com'; // <-- change this to your deployed backend URL
+    const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
       ? 'http://localhost:3000'
-      : 'https://roftx-1.onrender.com';
+      : PROD_API;
 
     async function handleCredentialResponse(response) {
       const msg = document.getElementById('status-msg');
