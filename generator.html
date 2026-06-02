@@ -399,8 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return s.trim();
   }
 
-  // ⚙️  PRODUCTION: Update this URL after deploying your backend
-  const PROD_API = 'https://roftx-api.onrender.com'; // <-- change this to your deployed backend URL
+  const PROD_API = 'https://roftx-1.onrender.com';
   const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3000'
     : PROD_API;

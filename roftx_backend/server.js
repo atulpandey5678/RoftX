@@ -69,6 +69,7 @@ app.use(helmet({
 const ALLOWED_ORIGINS = [
   'https://www.roftx.com',
   'https://roftx.com',
+  'https://roftx-front02.onrender.com',
   'http://localhost:8080',
   'http://127.0.0.1:8080',
   'http://localhost:5500',
