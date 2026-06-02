@@ -1,266 +1,344 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
-    <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-5JR48NHN');</script>
-    <!-- End Google Tag Manager -->
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RoftX - AI Personal Branding on LinkedIn</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RoftX – AI Personal Branding on LinkedIn</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <meta name="description" content="RoftX learns your unique voice and generates high-impact LinkedIn posts in seconds. Your AI thought partner for personal branding.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Page-specific overrides */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      padding: 0 24px; height: 68px;
+      display: flex; align-items: center;
+      background: rgba(5,5,8,0.7);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--color-border);
+      transition: all 0.3s;
+    }
+    .header-inner {
+      width: 100%; max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { font-size: 1.375rem; font-weight: 900; background: var(--gradient-primary); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-links { display: flex; align-items: center; gap: 8px; }
+
+    /* Hero */
+    .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 120px 24px 80px; position: relative; overflow: hidden; }
+    .hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 80% 60% at 50% -5%, rgba(99,102,241,0.22), rgba(167,139,250,0.08) 50%, transparent 80%); pointer-events: none; }
+    .hero-orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; }
+    .hero-orb-1 { width: 500px; height: 500px; top: -150px; left: 50%; transform: translateX(-50%); background: rgba(99,102,241,0.18); animation: glow-pulse 4s ease-in-out infinite; }
+    .hero-orb-2 { width: 300px; height: 300px; bottom: 10%; right: 10%; background: rgba(167,139,250,0.12); animation: glow-pulse 5s ease-in-out infinite 1s; }
+    @keyframes glow-pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+
+    .hero-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 999px; background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3); font-size: 0.8125rem; font-weight: 500; color: #a5b4fc; margin-bottom: 28px; animation: fadeInUp 0.5s ease; }
+    .hero-badge span { width: 6px; height: 6px; border-radius: 50%; background: #6366f1; display: inline-block; animation: glow-pulse 2s infinite; }
+
+    .hero h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.02em; max-width: 820px; margin: 0 auto 24px; animation: fadeInUp 0.6s 0.1s ease both; }
+    .hero p { font-size: 1.125rem; color: var(--color-text-secondary); max-width: 560px; margin: 0 auto 40px; animation: fadeInUp 0.6s 0.2s ease both; }
+    .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; animation: fadeInUp 0.6s 0.3s ease both; }
+
+    .hero-video { margin-top: 72px; max-width: 860px; width: 100%; margin-left: auto; margin-right: auto; border-radius: 20px; overflow: hidden; border: 1px solid rgba(99,102,241,0.3); box-shadow: 0 0 80px rgba(99,102,241,0.25); animation: fadeInUp 0.8s 0.4s ease both; }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 700px; margin: 0 auto; }
+    @media(max-width:640px){ .stats-grid{ grid-template-columns:repeat(3,1fr); gap:12px; } }
+
+    /* Features grid */
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+
+    /* How it works */
+    .steps-list { display: flex; flex-direction: column; gap: 24px; max-width: 600px; margin: 0 auto; }
+    .step-row { display: flex; gap: 20px; align-items: flex-start; padding: 24px; border-radius: var(--radius-lg); background: var(--color-bg-card); border: 1px solid var(--color-border); }
+    .step-content h3 { font-size: 1.0625rem; font-weight: 700; margin-bottom: 6px; }
+    .step-content p { font-size: 0.9rem; color: var(--color-text-secondary); }
+
+    /* Comparison */
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 900px; margin: 0 auto; }
+    @media(max-width:700px){ .compare-grid{ grid-template-columns:1fr; } }
+    .compare-col { padding: 32px; border-radius: var(--radius-xl); }
+    .compare-col.before { background: rgba(255,255,255,0.02); border: 1px solid var(--color-border); }
+    .compare-col.after { background: rgba(99,102,241,0.07); border: 2px solid rgba(99,102,241,0.4); }
+    .compare-item { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--color-border); }
+    .compare-item:last-child { border-bottom: none; }
+    .icon-x { color: #f87171; flex-shrink:0; margin-top:2px; }
+    .icon-check { color: #34d399; flex-shrink:0; margin-top:2px; }
+
+    /* CTA section */
+    .cta-section { text-align: center; padding: 100px 24px; background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(99,102,241,0.15), transparent 70%); }
+
+    /* Footer */
+    footer { padding: 32px 24px; border-top: 1px solid var(--color-border); }
+    .footer-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 0.875rem; color: var(--color-text-muted); transition: color 0.2s; }
+    .footer-links a:hover { color: var(--color-text); }
+
+    /* Testimonials */
+    .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+    .tcard { padding: 28px; border-radius: var(--radius-lg); background: var(--color-bg-card); border: 1px solid var(--color-border); transition: all 0.3s; }
+    .tcard:hover { border-color: rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .tcard-stars { color: #fbbf24; font-size: 0.875rem; margin-bottom: 14px; letter-spacing: 2px; }
+    .tcard-text { font-size: 0.9375rem; color: var(--color-text-secondary); line-height: 1.65; margin-bottom: 20px; }
+    .tcard-author { display: flex; align-items: center; gap: 12px; }
+    .tcard-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.875rem; color: white; }
+    .tcard-name { font-weight: 600; font-size: 0.9rem; }
+    .tcard-role { font-size: 0.8rem; color: var(--color-text-muted); }
+
+    @keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  </style>
 </head>
-<body class="antialiased">
-    <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5JR48NHN"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
+<body>
 
-    <!-- Header -->
-    <header class="absolute top-0 left-0 w-full z-10 p-4">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-white">RoftX</h1>
-            <nav>
-                <a href="signup.html" class="focusable bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-500 transition-colors">
-                    Let's Start
-                </a>
-            </nav>
+<!-- Header -->
+<header>
+  <div class="header-inner">
+    <a href="index.html" class="logo">RoftX</a>
+    <nav class="nav-links">
+      <a href="#features" class="btn btn-ghost focusable" style="font-size:.9rem;padding:8px 16px;border-radius:8px;">Features</a>
+      <a href="#how-it-works" class="btn btn-ghost focusable" style="font-size:.9rem;padding:8px 16px;border-radius:8px;">How It Works</a>
+      <a href="signup.html" class="btn btn-primary focusable" style="padding:10px 22px;font-size:.9rem;border-radius:10px;">Get Started →</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="container" style="position:relative;">
+      <div class="hero-badge">
+        <span></span>
+        AI Engine in Active Development — Preview Now
+      </div>
+      <h1>The AI That <span class="gradient-text">Builds Your Brand</span> on LinkedIn</h1>
+      <p>RoftX learns your voice, tracks trending topics in your niche, and drafts high-impact LinkedIn posts in seconds.</p>
+      <div class="hero-actions">
+        <a href="signup.html" class="btn btn-primary focusable" style="padding:14px 32px;font-size:1rem;">
+          ✨ Start Building for Free
+        </a>
+        <a href="#how-it-works" class="btn btn-secondary focusable" style="padding:14px 28px;font-size:1rem;">
+          See How It Works
+        </a>
+      </div>
+      <div class="hero-video">
+        <div class="video-aspect">
+          <iframe src="https://drive.google.com/file/d/11n9BSk9hevX9ajy_k2XQmnakwmjADbNd/preview" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
         </div>
-    </header>
+      </div>
+    </div>
+  </section>
 
-    <!-- Main Content -->
-    <main class="relative overflow-hidden">
-        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-[150%] sm:w-[150%] sm:h-[120%] md:w-full md:h-full bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(79,70,229,0.3),rgba(255,255,255,0))] -z-10"></div>
-        
-        <!-- Hero Section -->
-        <section class="container mx-auto pt-36 pb-16 px-4 text-center flex flex-col items-center">
-            
-            <div class="mb-8 inline-flex items-center gap-2 bg-slate-800/50 border border-slate-700 text-sm text-slate-300 px-4 py-2 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                Preview our AI engine while it's in active development.
-            </div>
-
-            <h2 class="text-4xl md:text-6xl font-black tracking-tight max-w-4xl mx-auto text-white">
-                The AI Engine That <span class="gradient-text">Builds Your Personal Brand</span>—On LinkedIn
-            </h2>
-            <p class="mt-8 text-lg text-slate-300 max-w-2xl">
-                RoftX learns your unique style, researches trending topics in your niche, and drafts high-impact LinkedIn posts in seconds.
-            </p>
-            
-             <a href="signup.html" class="focusable mt-10 px-8 py-4 rounded-full bg-indigo-600 text-white font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/50 text-lg transform hover:-translate-y-1">
-                Start Building in 60 Seconds ✨ &rarr;
-            </a>
-
-            <!-- Demo Video -->
-            <div class="mt-24 w-full max-w-4xl mx-auto rounded-2xl overflow-hidden hero-glow border border-indigo-500/30">
-                <div class="video-aspect">
-                    <iframe 
-                        src="https://drive.google.com/file/d/11n9BSk9hevX9ajy_k2XQmnakwmjADbNd/preview" 
-                        frameborder="0" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen>
-                    </iframe>
-                </div>
-            </div>
-        </section>
-
-        <!-- "How it Works" Section -->
-        <section class="py-20 px-4">
-            <div class="container mx-auto">
-                <div class="text-center mb-12">
-                     <h2 class="text-3xl md:text-4xl font-bold text-white">Your AI Thought Partner for LinkedIn</h2>
-                     <p class="mt-4 text-slate-400 max-w-2xl mx-auto">RoftX is more than an automation tool—it's your personal content strategist.</p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                    <div class="bg-slate-900/50 p-6 rounded-xl border border-slate-800 text-center transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20">
-                        <h3 class="text-xl font-semibold mb-2">Authentic Voice</h3>
-                        <p class="text-slate-400">Analyzes your writing to generate content that sounds exactly like you, maintaining your personal brand.</p>
-                    </div>
-                    <div class="bg-slate-900/50 p-6 rounded-xl border border-slate-800 text-center transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20">
-                        <h3 class="text-xl font-semibold mb-2">Trend-Aware</h3>
-                        <p class="text-slate-400">Scans the latest news and discussions in your niche to suggest topics that are timely and relevant.</p>
-                    </div>
-                    <div class="bg-slate-900/50 p-6 rounded-xl border border-slate-800 text-center transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20">
-                        <h3 class="text-xl font-semibold mb-2">Effortless Workflow</h3>
-                        <p class="text-slate-400">Delivers polished drafts for you to approve, saving you hours of research and writing time each week.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Before and After Section (Light Theme) -->
-        <section class="py-24 px-4 bg-white text-slate-900">
-            <div class="container mx-auto max-w-6xl">
-                <div class="text-center mb-16">
-                    <h2 class="text-4xl md:text-5xl font-bold">Stop the content grind. Start building your brand.</h2>
-                    <p class="mt-4 text-lg text-slate-600">RoftX transforms your content workflow from a chore into a strategic advantage.</p>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-                    <!-- Before -->
-                    <div class="bg-slate-50 p-8 rounded-2xl border border-slate-200">
-                        <h3 class="text-2xl font-bold mb-6 text-slate-800">Before RoftX...</h3>
-                        <ul class="space-y-4">
-                            <li class="flex items-start gap-3">
-                                <svg class="h-6 w-6 text-red-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                                <div>
-                                    <h4 class="font-semibold">Content Blank</h4>
-                                    <p class="text-slate-600">Struggling to find fresh, engaging ideas for your posts.</p>
-                                </div>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <svg class="h-6 w-6 text-red-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                                <div>
-                                    <h4 class="font-semibold">Hours Wasted</h4>
-                                    <p class="text-slate-600">Spending your valuable time writing and rewriting drafts.</p>
-                                </div>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <svg class="h-6 w-6 text-red-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                                <div>
-                                    <h4 class="font-semibold">Inconsistent Posting</h4>
-                                    <p class="text-slate-600">Finding it impossible to keep up with a consistent content schedule.</p>
-                                </div>
-                            </li>
-                             <li class="flex items-start gap-3">
-                                <svg class="h-6 w-6 text-red-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                                <div>
-                                    <h4 class="font-semibold">Low Engagement</h4>
-                                    <p class="text-slate-600">Creating posts that don't get the likes, comments, or results you want.</p>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                    <!-- With RoftX -->
-                    <div class="bg-white p-8 rounded-2xl border-2 border-indigo-500 shadow-2xl shadow-indigo-100">
-                        <h3 class="text-2xl font-bold mb-6 text-slate-800">With RoftX...</h3>
-                        <ul class="space-y-4">
-                            <li class="flex items-start gap-3">
-                                <svg class="h-6 w-6 text-green-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-                                <div>
-                                    <h4 class="font-semibold">Style Seeding</h4>
-                                    <p class="text-slate-600">Save your unique writing style for perfectly matched content, every time.</p>
-                                </div>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <svg class="h-6 w-6 text-green-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-                                <div>
-                                    <h4 class="font-semibold">AI-Powered Ideation</h4>
-                                    <p class="text-slate-600">Get inspired with trending topics tailored to your specific niche.</p>
-                                </div>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <svg class="h-6 w-6 text-green-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-                                <div>
-                                    <h4 class="font-semibold">One-Click Drafting</h4>
-                                    <p class="text-slate-600">Go from a single idea to a full, high-impact post in seconds.</p>
-                                </div>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <svg class="h-6 w-6 text-green-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-                                <div>
-                                    <h4 class="font-semibold">Content Scheduling & Analytics</h4>
-                                    <p class="text-slate-600">Plan your content calendar and analyze post metrics to see what works.</p>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Contact Section -->
-        <section id="contact" class="py-20 px-4">
-            <div class="container mx-auto max-w-2xl text-center">
-                <h2 class="text-3xl md:text-4xl font-bold text-white">Get in Touch</h2>
-                <p class="mt-4 text-slate-400">Have questions or feedback? We'd love to hear from you.</p>
-                <form id="contact-form" class="mt-8 text-left space-y-6">
-                    <div>
-                        <label for="name" class="block text-sm font-medium text-slate-300 mb-2">Full Name</label>
-                        <input type="text" id="name" name="name" required class="focusable w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all">
-                    </div>
-                     <div>
-                        <label for="email" class="block text-sm font-medium text-slate-300 mb-2">Email</label>
-                        <input type="email" id="email" name="email" required class="focusable w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all">
-                    </div>
-                     <div>
-                        <label for="message" class="block text-sm font-medium text-slate-300 mb-2">Message</label>
-                        <textarea id="message" name="message" rows="4" required class="focusable w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all"></textarea>
-                    </div>
-                    <div class="text-center">
-                        <button type="submit" id="contact-submit-button" class="focusable px-8 py-3 rounded-lg bg-indigo-600 text-white font-semibold shadow-lg transition-all duration-300 hover:bg-indigo-500 transform hover:-translate-y-1">
-                            Send Message
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </section>
-
-        <!-- Final Signup Section -->
-        <section id="signup" class="py-20 px-4 text-center flex flex-col items-center bg-slate-900/70">
-             <h3 class="text-3xl font-bold text-white mb-2">Ready to Build Your Personal Brand?</h3>
-             <p class="text-slate-400 mb-8">Enter the platform and start generating high-impact content today.</p>
-             <a href="signup.html" class="focusable px-8 py-4 rounded-lg bg-indigo-600 text-white font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/50 text-lg transform hover:-translate-y-1">
-                Let's Start
-            </a>
-        </section>
-    </main>
-    
-    <footer class="text-center py-8 border-t border-slate-800">
-        <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 px-4">
-            <p class="text-slate-500 text-sm">&copy; 2024 RoftX - All Rights Reserved.</p>
-            <div class="flex gap-6 text-sm">
-                <a href="terms.html" class="text-slate-400 hover:text-white transition-colors">Terms of Service</a>
-                <a href="privacy.html" class="text-slate-400 hover:text-white transition-colors">Privacy Policy</a>
-                <a href="contact.html" class="text-slate-400 hover:text-white transition-colors">Contact</a>
-            </div>
+  <!-- Stats -->
+  <section class="section-sm" style="padding-top:0;">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number">60s</div>
+          <div class="stat-label">Avg. time to first post</div>
         </div>
-    </footer>
+        <div class="stat-card">
+          <div class="stat-number">3x</div>
+          <div class="stat-label">Engagement boost</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">500+</div>
+          <div class="stat-label">Niches supported</div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const contactForm = document.getElementById('contact-form');
-            const contactSubmitButton = document.getElementById('contact-submit-button');
-            const formResponse = document.createElement('p');
-            formResponse.className = 'mt-4 text-center';
-            contactForm.appendChild(formResponse);
+  <!-- Features -->
+  <section id="features" class="section">
+    <div class="container">
+      <div style="text-align:center;margin-bottom:56px;">
+        <div class="section-tag">Core Features</div>
+        <h2 class="section-title">Your AI Thought Partner for LinkedIn</h2>
+        <p class="section-subtitle">More than automation — a full content strategy engine built around your unique voice.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card focusable" tabindex="0">
+          <div class="feature-icon">🎯</div>
+          <div class="feature-title">Authentic Voice Matching</div>
+          <p class="feature-desc">Paste a sample of your writing and the AI adapts to your exact tone, rhythm, and style — every post sounds like you.</p>
+        </div>
+        <div class="feature-card focusable" tabindex="0">
+          <div class="feature-icon">📈</div>
+          <div class="feature-title">Trend-Aware Ideation</div>
+          <p class="feature-desc">Scans the latest discussions in your niche to surface timely, high-relevance topics that spark real engagement.</p>
+        </div>
+        <div class="feature-card focusable" tabindex="0">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-title">One-Click Drafting</div>
+          <p class="feature-desc">From a single idea to a polished, full-length post in under 60 seconds — using the proven E.N.G.A.G.E framework.</p>
+        </div>
+        <div class="feature-card focusable" tabindex="0">
+          <div class="feature-icon">🪝</div>
+          <div class="feature-title">Hook Generator</div>
+          <p class="feature-desc">Choose from 3 AI-crafted scroll-stopping openers — Contrarian, Curiosity Gap, Data Insight — tailored to your topic.</p>
+        </div>
+        <div class="feature-card focusable" tabindex="0">
+          <div class="feature-icon">🔄</div>
+          <div class="feature-title">Smart Regeneration</div>
+          <p class="feature-desc">Not satisfied? Give instructions like "add emojis" or "make it more punchy" and get an instant revision.</p>
+        </div>
+        <div class="feature-card focusable" tabindex="0">
+          <div class="feature-icon">🔒</div>
+          <div class="feature-title">Secure & Private</div>
+          <p class="feature-desc">Google OAuth sign-in, encrypted API calls, rate limiting, and zero content storage — your data stays yours.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-            contactForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                contactSubmitButton.disabled = true;
-                contactSubmitButton.textContent = "Sending...";
-                formResponse.textContent = '';
+  <!-- How It Works -->
+  <section id="how-it-works" class="section" style="background:linear-gradient(to bottom, transparent, rgba(99,102,241,0.04), transparent);">
+    <div class="container">
+      <div style="text-align:center;margin-bottom:56px;">
+        <div class="section-tag">Simple Process</div>
+        <h2 class="section-title">Post in 3 Steps</h2>
+        <p class="section-subtitle">No learning curve. No content blocks. Just results.</p>
+      </div>
+      <div class="steps-list">
+        <div class="step-row">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>Set Your Niche & Topic</h3>
+            <p>Tell RoftX your content niche (e.g. SaaS, Fintech) and paste a topic idea — or let it suggest trending ones for you.</p>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>Seed Your Voice</h3>
+            <p>Optionally paste a previous post or upload a file. The AI reads your style and matches it exactly in every draft.</p>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>Pick a Hook & Publish</h3>
+            <p>Choose your favorite AI-generated hook, review the full post, copy it, and paste directly into LinkedIn. Done.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-                const scriptURL = 'https://script.google.com/macros/s/AKfycbyiOr0BKLPFvGmyr96bClFUbeAElz4heMcMtfASTHfquB4lmGy1uIWfRXmlazqhWnFlNg/exec';
-                
-                try {
-                    const response = await fetch(scriptURL, { method: 'POST', body: new FormData(contactForm)});
-                    if (response.ok) {
-                        formResponse.textContent = "Thank you for your message! We'll get back to you shortly.";
-                        formResponse.className = 'mt-4 text-center text-green-400';
-                        contactForm.reset();
-                    } else {
-                        throw new Error('Network response was not ok.');
-                    }
-                } catch (error) {
-                    console.error('Error!', error.message);
-                    formResponse.textContent = "Sorry, there was an error sending your message. Please try again.";
-                    formResponse.className = 'mt-4 text-center text-red-400';
-                } finally {
-                    contactSubmitButton.disabled = false;
-                    contactSubmitButton.textContent = "Send Message";
-                }
-            });
-        });
-    </script>
+  <!-- Before / After -->
+  <section class="section">
+    <div class="container">
+      <div style="text-align:center;margin-bottom:56px;">
+        <div class="section-tag">The Difference</div>
+        <h2 class="section-title">Stop the Content Grind</h2>
+        <p class="section-subtitle">Transform your content workflow from a painful chore into a strategic advantage.</p>
+      </div>
+      <div class="compare-grid">
+        <div class="compare-col before">
+          <h3 style="font-size:1.25rem;font-weight:800;margin-bottom:24px;color:var(--color-text-secondary);">❌ Before RoftX</h3>
+          <div class="compare-item"><span class="icon-x">✗</span><div><strong>Content Blanks</strong><br><span style="font-size:.875rem;color:var(--color-text-secondary);">Struggling to find fresh, engaging post ideas.</span></div></div>
+          <div class="compare-item"><span class="icon-x">✗</span><div><strong>Hours Wasted</strong><br><span style="font-size:.875rem;color:var(--color-text-secondary);">Spending valuable time rewriting drafts.</span></div></div>
+          <div class="compare-item"><span class="icon-x">✗</span><div><strong>Inconsistent Posting</strong><br><span style="font-size:.875rem;color:var(--color-text-secondary);">Impossible to keep a steady content schedule.</span></div></div>
+          <div class="compare-item"><span class="icon-x">✗</span><div><strong>Low Engagement</strong><br><span style="font-size:.875rem;color:var(--color-text-secondary);">Posts that don't get the results you want.</span></div></div>
+        </div>
+        <div class="compare-col after">
+          <h3 style="font-size:1.25rem;font-weight:800;margin-bottom:24px;">✅ With RoftX</h3>
+          <div class="compare-item"><span class="icon-check">✓</span><div><strong>Style-Seeded Content</strong><br><span style="font-size:.875rem;color:var(--color-text-secondary);">Every post matches your unique voice perfectly.</span></div></div>
+          <div class="compare-item"><span class="icon-check">✓</span><div><strong>Posts in 60 Seconds</strong><br><span style="font-size:.875rem;color:var(--color-text-secondary);">From idea to publish-ready in under a minute.</span></div></div>
+          <div class="compare-item"><span class="icon-check">✓</span><div><strong>Never Run Out of Ideas</strong><br><span style="font-size:.875rem;color:var(--color-text-secondary);">AI surfaces trending topics on demand.</span></div></div>
+          <div class="compare-item"><span class="icon-check">✓</span><div><strong>Built for Engagement</strong><br><span style="font-size:.875rem;color:var(--color-text-secondary);">E.N.G.A.G.E framework for maximum impact.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="section" style="background:linear-gradient(to bottom,transparent,rgba(99,102,241,0.04),transparent);">
+    <div class="container">
+      <div style="text-align:center;margin-bottom:56px;">
+        <div class="section-tag">Social Proof</div>
+        <h2 class="section-title">Loved by Builders & Leaders</h2>
+      </div>
+      <div class="testimonials-grid">
+        <div class="tcard">
+          <div class="tcard-stars">★★★★★</div>
+          <p class="tcard-text">"RoftX completely changed how I show up on LinkedIn. I used to dread posting — now I have a draft ready in minutes that actually sounds like me."</p>
+          <div class="tcard-author">
+            <div class="tcard-avatar" style="background:linear-gradient(135deg,#6366f1,#a78bfa);">AR</div>
+            <div><div class="tcard-name">Arjun Rao</div><div class="tcard-role">Founder, SaaS Startup</div></div>
+          </div>
+        </div>
+        <div class="tcard">
+          <div class="tcard-stars">★★★★★</div>
+          <p class="tcard-text">"The hook generator alone is worth it. I went from 200 to 1,400 impressions per post within two weeks of using RoftX."</p>
+          <div class="tcard-author">
+            <div class="tcard-avatar" style="background:linear-gradient(135deg,#ec4899,#f97316);">SK</div>
+            <div><div class="tcard-name">Sneha Kapoor</div><div class="tcard-role">Product Manager, Fintech</div></div>
+          </div>
+        </div>
+        <div class="tcard">
+          <div class="tcard-stars">★★★★★</div>
+          <p class="tcard-text">"I paste one of my old posts and the AI just *gets* my voice. Every single draft feels authentic — not like a robot wrote it."</p>
+          <div class="tcard-author">
+            <div class="tcard-avatar" style="background:linear-gradient(135deg,#10b981,#3b82f6);">MJ</div>
+            <div><div class="tcard-name">Marcus J.</div><div class="tcard-role">VC Associate</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="section-tag">Get Started Today</div>
+    <h2 class="section-title" style="margin-bottom:16px;">Ready to Build Your Personal Brand?</h2>
+    <p style="color:var(--color-text-secondary);margin-bottom:40px;font-size:1.0625rem;">Join hundreds of professionals using RoftX to post smarter, not harder.</p>
+    <a href="signup.html" class="btn btn-primary focusable" style="padding:16px 40px;font-size:1.0625rem;">
+      Start Building for Free ✨
+    </a>
+  </section>
+</main>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-inner">
+    <span class="logo" style="font-size:1.1rem;">RoftX</span>
+    <p style="font-size:.8125rem;color:var(--color-text-muted);">© 2025 RoftX — All Rights Reserved.</p>
+    <div class="footer-links">
+      <a href="terms.html" class="focusable">Terms</a>
+      <a href="privacy.html" class="focusable">Privacy</a>
+      <a href="contact.html" class="focusable">Contact</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal with fallback
+  const revealEls = document.querySelectorAll('.feature-card, .step-row, .tcard, .stat-card, .compare-col');
+  
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.05, rootMargin: '0px 0px -40px 0px' });
+
+    revealEls.forEach(el => {
+      el.classList.add('reveal');
+      observer.observe(el);
+    });
+  }
+  // If no IntersectionObserver, just show everything
+</script>
 </body>
 </html>

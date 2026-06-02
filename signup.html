@@ -1,94 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-5JR48NHN');</script>
-<!-- End Google Tag Manager -->
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to RoftX</title>
-    <!-- Google Identity Services Library -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0A0A0A;
-            color: #E2E8F0;
-        }
-        .focusable:focus-visible {
-            outline: 2px solid #A78BFA;
-            outline-offset: 4px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RoftX – Sign In</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; background:var(--color-bg); position:relative; overflow:hidden; }
+    .bg-orb { position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none; }
+    .bg-orb-1 { width:500px;height:500px;top:-200px;left:50%;transform:translateX(-50%);background:rgba(99,102,241,.15);animation:glow-pulse 5s ease-in-out infinite; }
+    .bg-orb-2 { width:300px;height:300px;bottom:-100px;right:-50px;background:rgba(167,139,250,.1);animation:glow-pulse 6s ease-in-out infinite 1s; }
+    @keyframes glow-pulse{0%,100%{opacity:.5}50%{opacity:1}}
+
+    .logo { font-size:1.75rem;font-weight:900;background:var(--gradient-primary);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;display:block;text-align:center; }
+    .tagline { font-size:.9rem;color:var(--color-text-muted);text-align:center;margin-bottom:36px; }
+
+    .card { width:100%;max-width:420px;background:rgba(255,255,255,.03);border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:40px 36px;backdrop-filter:blur(20px);position:relative;z-index:1;animation:fadeInUp .5s ease; }
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+    .card-title { font-size:1.375rem;font-weight:800;text-align:center;margin-bottom:6px; }
+    .card-sub { font-size:.9rem;color:var(--color-text-secondary);text-align:center;margin-bottom:28px; }
+
+    .divider { display:flex;align-items:center;gap:12px;margin:24px 0; }
+    .divider-line { flex:1;height:1px;background:var(--color-border); }
+    .divider-text { font-size:.8rem;color:var(--color-text-muted); }
+
+    .benefits { display:flex;flex-direction:column;gap:10px;margin-top:28px;padding-top:24px;border-top:1px solid var(--color-border); }
+    .benefit-item { display:flex;align-items:center;gap:10px;font-size:.875rem;color:var(--color-text-secondary); }
+    .benefit-icon { color:#34d399;font-size:.875rem;flex-shrink:0; }
+
+    #status-msg { text-align:center;font-size:.875rem;color:var(--color-text-secondary);min-height:20px;margin-top:8px;transition:all .2s; }
+
+    /* Google button override — center it */
+    .g_id_signin { display:flex; justify-content:center; }
+
+    .back-link { margin-top:24px;font-size:.8125rem;color:var(--color-text-muted);text-align:center;z-index:1;position:relative; }
+    .back-link a { color:var(--color-primary-light); }
+    .back-link a:hover { text-decoration:underline; }
+  </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
-    <!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5JR48NHN"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
+<body>
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
 
-    <div class="w-full max-w-md">
-        <div class="text-center mb-8">
-            <a href="index.html" class="text-3xl font-bold text-white">RoftX</a>
-            <p id="welcome-message" class="mt-2 text-slate-400">Sign in to continue to the platform.</p>
-        </div>
+  <a href="index.html" class="logo" style="position:relative;z-index:1;">RoftX</a>
+  <p class="tagline" style="position:relative;z-index:1;">AI-Powered LinkedIn Personal Branding</p>
 
-        <div class="bg-slate-900/50 p-8 rounded-2xl border border-slate-800">
-            <!-- Google Sign-In Button Container -->
-            <div id="g_id_onload"
-                 data-client_id="225100810623-7v2md7r8r2os44of016c6a3ebk0gseom.apps.googleusercontent.com" 
-                 data-callback="handleCredentialResponse"
-                 data-auto_prompt="false">
-            </div>
-            <div class="g_id_signin"
-                 data-type="standard"
-                 data-shape="rectangular"
-                 data-theme="outline"
-                 data-text="continue_with"
-                 data-size="large"
-                 data-logo_alignment="left">
-            </div>
-        </div>
+  <div class="card">
+    <h1 class="card-title">Welcome Back</h1>
+    <p class="card-sub" id="status-msg">Sign in to access the AI generator.</p>
+
+    <!-- Google Sign-In -->
+    <div id="g_id_onload"
+         data-client_id="225100810623-7v2md7r8r2os44of016c6a3ebk0gseom.apps.googleusercontent.com"
+         data-callback="handleCredentialResponse"
+         data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin"
+         data-type="standard"
+         data-shape="rectangular"
+         data-theme="filled_black"
+         data-text="continue_with"
+         data-size="large"
+         data-logo_alignment="left"
+         data-width="340">
     </div>
 
-    <script>
-    async function handleCredentialResponse(response) {
-      try {
-        document.getElementById('welcome-message').textContent = 'Authenticating... Please wait.';
-        
-        const serverResponse = await fetch('https://roftx-1.onrender.com/api/auth/google', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ token: response.credential })
-        });
+    <div class="divider">
+      <div class="divider-line"></div>
+      <div class="divider-text">What you get</div>
+      <div class="divider-line"></div>
+    </div>
 
-        const data = await serverResponse.json();
-        
-        // Fixed: Check for success property instead of message
-        if (serverResponse.ok && data.success === true) {
-            console.log('Login successful!', data.user);
-            window.location.href = 'generator.html';
+    <div class="benefits">
+      <div class="benefit-item"><span class="benefit-icon">✓</span> AI-generated posts in 60 seconds</div>
+      <div class="benefit-item"><span class="benefit-icon">✓</span> Voice-matched content every time</div>
+      <div class="benefit-item"><span class="benefit-icon">✓</span> Trending topic suggestions for your niche</div>
+
+    </div>
+  </div>
+
+  <div class="back-link">
+    <a href="index.html" class="focusable">← Back to homepage</a>
+  </div>
+
+  <!-- Local dev bypass (hidden in production) -->
+  <div id="dev-bypass" style="margin-top:16px;text-align:center;position:relative;z-index:1;display:none;">
+    <p style="font-size:.75rem;color:var(--color-text-muted);margin-bottom:8px;">Dev mode: Google Sign-In not available on this origin.</p>
+    <button onclick="window.location.href='generator.html'" class="btn btn-secondary focusable" style="font-size:.8125rem;padding:9px 20px;border-radius:8px;">Continue to Generator →</button>
+  </div>
+
+  <script>
+    // Show dev bypass if Google GSI fails to load (localhost not whitelisted in OAuth)
+    window.addEventListener('load', () => {
+      const gsDiv = document.querySelector('.g_id_signin');
+      // If Google button iframe didn't render after 2s, show bypass
+      setTimeout(() => {
+        const iframe = gsDiv ? gsDiv.querySelector('iframe') : null;
+        if (!iframe) {
+          document.getElementById('dev-bypass').style.display = 'block';
+        }
+      }, 2000);
+    });
+  </script>
+
+  <script>
+    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:3000'
+      : 'https://roftx-1.onrender.com';
+
+    async function handleCredentialResponse(response) {
+      const msg = document.getElementById('status-msg');
+      msg.textContent = 'Authenticating… please wait.';
+      msg.style.color = '#a5b4fc';
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/google`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: response.credential })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          msg.textContent = '✓ Signed in! Redirecting…';
+          msg.style.color = '#34d399';
+          setTimeout(() => window.location.href = 'generator.html', 800);
         } else {
-            alert(`Authentication failed: ${data.error || 'Unknown error'}`);
-            document.getElementById('welcome-message').textContent = 'Sign in to continue to the platform.';
+          msg.textContent = `❌ ${data.error || 'Authentication failed.'}`;
+          msg.style.color = '#f87171';
         }
       } catch(err) {
-        alert('Error connecting to the backend. Please try again later.');
+        msg.textContent = '❌ Could not connect to server. Try again.';
+        msg.style.color = '#f87171';
         console.error(err);
-        document.getElementById('welcome-message').textContent = 'Sign in to continue to the platform.';
       }
     }
-</script>
-
+  </script>
 </body>
 </html>
