@@ -5,6 +5,9 @@ node_modules/
 .env
 roftx_backend/.env
 
+# Proprietary prompt templates (deploy via Render Secret Files)
+roftx_backend/prompts.js
+
 # OS files
 .DS_Store
 Thumbs.db
