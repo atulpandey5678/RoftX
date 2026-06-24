@@ -97,9 +97,8 @@ const ALLOWED_ORIGINS = [
 
 app.use(cors({
   origin(origin, cb) {
-    // Block requests with no origin in production (curl/Postman abuse)
-    if (!origin && NODE_ENV === 'production') return cb(new Error('No origin'));
-    if (!origin && NODE_ENV !== 'production') return cb(null, true);
+    // Allow requests with no origin (like Render health checks or direct browser visits)
+    if (!origin) return cb(null, true);
     // Allow all localhost in dev
     if (NODE_ENV !== 'production' &&
         (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) {
