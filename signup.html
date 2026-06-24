@@ -54,12 +54,7 @@
     <h1 class="card-title">Welcome Back</h1>
     <p class="card-sub" id="status-msg">Sign in to access the AI generator.</p>
 
-    <!-- Google Sign-In — client_id injected by JS from /api/config -->
-    <div id="g_id_onload"
-         data-client_id=""
-         data-callback="handleCredentialResponse"
-         data-auto_prompt="false">
-    </div>
+    <!-- Google Sign-In container -->
     <div class="g_id_signin"
          data-type="standard"
          data-shape="rectangular"
@@ -99,36 +94,39 @@
     const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
       ? 'http://localhost:3000' : PROD_API;
 
-    // Fetch Google Client ID from backend, then initialise GSI
-    (async () => {
+    // Fetch Google Client ID from backend, then initialise GSI programmatically
+    async function initGoogleAuth() {
       try {
         const cfg = await fetch(`${API_BASE}/api/config`).then(r => r.json());
-        const loader = document.getElementById('g_id_onload');
-        if (cfg.googleClientId && loader) {
-          loader.setAttribute('data-client_id', cfg.googleClientId);
-          // Re-initialise Google GSI after setting client_id
-          if (window.google && window.google.accounts) {
-            google.accounts.id.initialize({ client_id: cfg.googleClientId, callback: handleCredentialResponse });
-            google.accounts.id.renderButton(document.querySelector('.g_id_signin'), { theme:'filled_black', size:'large', text:'continue_with', width:340 });
-          }
+        if (cfg.googleClientId && window.google && window.google.accounts) {
+          google.accounts.id.initialize({
+            client_id: cfg.googleClientId,
+            callback: handleCredentialResponse,
+            auto_prompt: false
+          });
+          google.accounts.id.renderButton(document.querySelector('.g_id_signin'), {
+            theme: 'filled_black',
+            size: 'large',
+            text: 'continue_with',
+            width: 340
+          });
         }
-      } catch(e) { console.warn('Config fetch failed:', e); }
-    })();
+      } catch (e) {
+        console.warn('Config fetch failed:', e);
+      }
+    }
 
-    // Dev bypass — show if Google button iframe never renders
-    window.addEventListener('load', () => {
+    // Wait for the GSI script to load if it hasn't already
+    window.onload = () => {
+      if (window.google) initGoogleAuth();
+      else setTimeout(initGoogleAuth, 1000); // fallback wait
+      
+      // Dev bypass — show if Google button iframe never renders
       setTimeout(() => {
         const iframe = document.querySelector('.g_id_signin iframe');
         if (!iframe) document.getElementById('dev-bypass').style.display = 'block';
       }, 2500);
-    });
-  </script>
-
-  <script>
-    const PROD_API = 'https://roftx-1.onrender.com';
-    const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://localhost:3000'
-      : PROD_API;
+    };
 
     async function handleCredentialResponse(response) {
       const msg = document.getElementById('status-msg');
