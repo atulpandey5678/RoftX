@@ -54,9 +54,9 @@
     <h1 class="card-title">Welcome Back</h1>
     <p class="card-sub" id="status-msg">Sign in to access the AI generator.</p>
 
-    <!-- Google Sign-In -->
+    <!-- Google Sign-In — client_id injected by JS from /api/config -->
     <div id="g_id_onload"
-         data-client_id="225100810623-7v2md7r8r2os44of016c6a3ebk0gseom.apps.googleusercontent.com"
+         data-client_id=""
          data-callback="handleCredentialResponse"
          data-auto_prompt="false">
     </div>
@@ -95,16 +95,32 @@
   </div>
 
   <script>
-    // Show dev bypass if Google GSI fails to load (localhost not whitelisted in OAuth)
-    window.addEventListener('load', () => {
-      const gsDiv = document.querySelector('.g_id_signin');
-      // If Google button iframe didn't render after 2s, show bypass
-      setTimeout(() => {
-        const iframe = gsDiv ? gsDiv.querySelector('iframe') : null;
-        if (!iframe) {
-          document.getElementById('dev-bypass').style.display = 'block';
+    const PROD_API = 'https://roftx-1.onrender.com';
+    const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? 'http://localhost:3000' : PROD_API;
+
+    // Fetch Google Client ID from backend, then initialise GSI
+    (async () => {
+      try {
+        const cfg = await fetch(`${API_BASE}/api/config`).then(r => r.json());
+        const loader = document.getElementById('g_id_onload');
+        if (cfg.googleClientId && loader) {
+          loader.setAttribute('data-client_id', cfg.googleClientId);
+          // Re-initialise Google GSI after setting client_id
+          if (window.google && window.google.accounts) {
+            google.accounts.id.initialize({ client_id: cfg.googleClientId, callback: handleCredentialResponse });
+            google.accounts.id.renderButton(document.querySelector('.g_id_signin'), { theme:'filled_black', size:'large', text:'continue_with', width:340 });
+          }
         }
-      }, 2000);
+      } catch(e) { console.warn('Config fetch failed:', e); }
+    })();
+
+    // Dev bypass — show if Google button iframe never renders
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const iframe = document.querySelector('.g_id_signin iframe');
+        if (!iframe) document.getElementById('dev-bypass').style.display = 'block';
+      }, 2500);
     });
   </script>
 

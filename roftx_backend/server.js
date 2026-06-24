@@ -61,17 +61,24 @@ if (!DATABASE_URL && !DATABASE_PASSWORD) {
 const app = express();
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
+// ─── Trust Proxy (Render / Railway run behind a reverse proxy) ───────────────
+app.set('trust proxy', 1);
+
 // ─── Security: Helmet ─────────────────────────────────────────────────────────
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc:  ["'self'"],
-      objectSrc:  ["'none'"],
-      upgradeInsecureRequests: [],
+      defaultSrc:      ["'self'"],
+      scriptSrc:       ["'self'", 'https://accounts.google.com', 'https://apis.google.com'],
+      frameSrc:        ["'self'", 'https://accounts.google.com'],
+      connectSrc:      ["'self'", 'https://accounts.google.com'],
+      imgSrc:          ["'self'", 'https:', 'data:'],
+      objectSrc:       ["'none'"],
+      upgradeInsecureRequests: NODE_ENV === 'production' ? [] : null,
     },
   },
   crossOriginEmbedderPolicy: false,
+  hsts: NODE_ENV === 'production' ? { maxAge: 31536000, includeSubDomains: true } : false,
 }));
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
@@ -90,14 +97,15 @@ const ALLOWED_ORIGINS = [
 
 app.use(cors({
   origin(origin, cb) {
-    // Allow non-browser tools (Postman, curl) only in dev
+    // Block requests with no origin in production (curl/Postman abuse)
+    if (!origin && NODE_ENV === 'production') return cb(new Error('No origin'));
     if (!origin && NODE_ENV !== 'production') return cb(null, true);
-    // In dev, allow ALL localhost / 127.0.0.1 origins (any port)
-    if (NODE_ENV !== 'production' && origin &&
+    // Allow all localhost in dev
+    if (NODE_ENV !== 'production' &&
         (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) {
       return cb(null, true);
     }
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
     console.warn(`⚠️  CORS blocked: ${origin}`);
     cb(new Error('Not allowed by CORS'));
   },
@@ -118,8 +126,8 @@ const globalLimiter = rateLimit({
 });
 
 const aiLimiter = rateLimit({
-  windowMs: 60 * 1000,  // 1 min
-  max: 10,              // max 10 AI calls per minute per IP
+  windowMs: 60 * 1000,
+  max: NODE_ENV === 'production' ? 8 : 30,  // stricter in prod
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'AI rate limit exceeded. Please wait a moment.' },
@@ -276,6 +284,11 @@ app.get('/', (req, res) => {
     database: isDatabaseAvailable ? 'connected' : 'unavailable',
     timestamp: new Date().toISOString(),
   });
+});
+
+// ─── Public Config (safe to expose) ──────────────────────────────────────────
+app.get('/api/config', (req, res) => {
+  res.json({ googleClientId: GOOGLE_CLIENT_ID });
 });
 
 // ─── Google Auth ──────────────────────────────────────────────────────────────
