@@ -197,7 +197,7 @@ async function callOpenAI(prompt, tier = 'fast') {
 // ─── AI Provider: Claude ──────────────────────────────────────────────────────
 const CLAUDE_MODELS = {
   fast:    'claude-3-5-haiku-20241022',
-  quality: 'claude-3-5-sonnet-20240620',
+  quality: 'claude-3-5-sonnet-20241022',
 };
 
 async function callClaude(prompt, tier = 'fast') {
