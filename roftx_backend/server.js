@@ -1,5 +1,6 @@
 // server.js - Production Ready | RoftX Backend
 // Supports: OpenAI (primary) + Claude (fallback) | Google Auth | Security Hardened
+// Elite Prompt System — 6 prompts via prompts.js
 
 import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
@@ -12,6 +13,14 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 import express from 'express';
+import {
+  buildTopicSuggestionsPrompt,
+  buildVoiceAnalysisPrompt,
+  buildHookGeneratorPrompt,
+  buildFullPostPrompt,
+  buildRefinementPrompt,
+  buildRegenerationPrompt,
+} from './prompts.js';
 import cors from 'cors';
 import pg from 'pg';
 import { OAuth2Client } from 'google-auth-library';
@@ -364,6 +373,150 @@ app.post('/api/gemini', aiLimiter, async (req, res) => {
     const status = err.status || 500;
     if (status === 429) return res.status(429).json({ error: 'AI rate limit reached. Try again in a moment.' });
     if (status === 401) return res.status(500).json({ error: 'AI service authentication error. Contact support.' });
+    return res.status(500).json({ error: 'AI generation failed. Please try again.' });
+  }
+});
+
+// ─── Response Parsers ────────────────────────────────────────────────────────
+function parseTopics(text) {
+  const topics = [];
+  const blocks = text.split(/TOPIC \d+/i).filter(b => b.trim());
+  for (const block of blocks) {
+    const triggerMatch = block.match(/Trigger type:\s*(.+)/i);
+    const premiseMatch = block.match(/Premise:\s*(.+)/i);
+    const whyMatch     = block.match(/Why it works:\s*(.+)/i);
+    if (premiseMatch) topics.push({
+      triggerType:  (triggerMatch?.[1] || 'INSIGHT').trim().toUpperCase(),
+      premise:      premiseMatch[1].trim(),
+      whyItWorks:   (whyMatch?.[1] || '').trim(),
+    });
+  }
+  return topics;
+}
+
+function parseHooks(text) {
+  const hooks  = [];
+  const types  = ['CONTRARIAN', 'CURIOSITY GAP', 'DATA / SPECIFICITY'];
+  const blocks = text.split(/HOOK \d+ ?[\u2014\u2013-]/i).filter(b => b.trim());
+  blocks.forEach((block, i) => {
+    const cleaned  = block.replace(/^(CONTRARIAN|CURIOSITY GAP|DATA[^\n]*)\n/i, '').trim();
+    const whyMatch = cleaned.match(/Why this works:\s*(.+)/is);
+    const hookText = cleaned.replace(/Why this works:[\s\S]*/i, '').trim();
+    if (hookText) hooks.push({
+      type:        types[i] || `HOOK ${i + 1}`,
+      text:        hookText,
+      whyItWorks:  (whyMatch?.[1] || '').trim(),
+    });
+  });
+  return hooks;
+}
+
+function splitMeta(text, marker) {
+  const idx = text.lastIndexOf(marker);
+  if (idx === -1) return { post: text.trim(), meta: '' };
+  return { post: text.slice(0, idx).trim(), meta: text.slice(idx + marker.length).trim() };
+}
+
+// ─── /api/generate — Elite Prompt Route ──────────────────────────────────────
+const TIER_MAP = {
+  topics:     'fast',
+  voice:      'quality',
+  hooks:      'fast',
+  post:       'quality',
+  refine:     'quality',
+  regenerate: 'quality',
+};
+
+app.post('/api/generate', aiLimiter, async (req, res) => {
+  const { type, niche, topic, writingSample, voiceProfile,
+          chosenHook, currentPost, instruction } = req.body;
+
+  if (!type) return res.status(400).json({ error: 'Missing type field.' });
+
+  let prompt;
+  try {
+    switch (type) {
+      case 'topics':
+        if (!niche) return res.status(400).json({ error: 'niche required.' });
+        prompt = buildTopicSuggestionsPrompt(sanitise(niche, 200));
+        break;
+      case 'voice':
+        if (!writingSample) return res.status(400).json({ error: 'writingSample required.' });
+        prompt = buildVoiceAnalysisPrompt(sanitise(writingSample, 10000));
+        break;
+      case 'hooks':
+        if (!niche || !topic) return res.status(400).json({ error: 'niche and topic required.' });
+        prompt = buildHookGeneratorPrompt(
+          sanitise(niche, 200), sanitise(topic, 500),
+          sanitise(voiceProfile || '', 5000), sanitise(req.body.extra || '', 500)
+        );
+        break;
+      case 'post':
+        if (!niche || !topic || !chosenHook)
+          return res.status(400).json({ error: 'niche, topic, chosenHook required.' });
+        prompt = buildFullPostPrompt(
+          sanitise(niche, 200), sanitise(topic, 500),
+          sanitise(chosenHook, 1000), sanitise(voiceProfile || '', 5000)
+        );
+        break;
+      case 'refine':
+        if (!currentPost || !instruction)
+          return res.status(400).json({ error: 'currentPost and instruction required.' });
+        prompt = buildRefinementPrompt(
+          sanitise(currentPost, 5000), sanitise(instruction, 500),
+          sanitise(voiceProfile || '', 5000)
+        );
+        break;
+      case 'regenerate':
+        if (!currentPost || !niche || !topic)
+          return res.status(400).json({ error: 'currentPost, niche, topic required.' });
+        prompt = buildRegenerationPrompt(
+          sanitise(currentPost, 5000), sanitise(niche, 200),
+          sanitise(topic, 500), sanitise(voiceProfile || '', 5000)
+        );
+        break;
+      default:
+        return res.status(400).json({ error: `Unknown type: ${type}` });
+    }
+  } catch (buildErr) {
+    return res.status(400).json({ error: buildErr.message });
+  }
+
+  const tier = TIER_MAP[type] || 'fast';
+  console.log(`🎯 /api/generate | type:${type} tier:${tier} len:${prompt.length}`);
+
+  try {
+    const raw = await callAI(prompt, tier);
+    if (!raw) throw new Error('Empty AI response');
+
+    switch (type) {
+      case 'topics': {
+        const topics = parseTopics(raw);
+        if (!topics.length) throw new Error('Could not parse topics from AI response');
+        return res.json({ topics });
+      }
+      case 'voice':
+        return res.json({ voiceProfile: raw.trim() });
+      case 'hooks': {
+        const hooks = parseHooks(raw);
+        if (!hooks.length) throw new Error('Could not parse hooks from AI response');
+        return res.json({ hooks });
+      }
+      case 'post':
+        return res.json({ post: raw.trim() });
+      case 'refine': {
+        const { post, meta } = splitMeta(raw, 'CHANGE MADE:');
+        return res.json({ post, changeMade: meta });
+      }
+      case 'regenerate': {
+        const { post, meta } = splitMeta(raw, 'NEW ANGLE USED:');
+        return res.json({ post, newAngle: meta });
+      }
+    }
+  } catch (err) {
+    console.error(`❌ /api/generate [${type}]:`, err.message);
+    const status = err.status || 500;
+    if (status === 429) return res.status(429).json({ error: 'AI rate limit reached. Try again in a moment.' });
     return res.status(500).json({ error: 'AI generation failed. Please try again.' });
   }
 });

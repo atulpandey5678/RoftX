@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RoftX – AI Post Generator</title>
+  <title>RoftX â€“ AI Post Generator</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -136,13 +136,13 @@
         <div class="input-wrap">
           <textarea id="style-input" class="input-field focusable" rows="5" placeholder="Paste a previous LinkedIn post so the AI can match your exact voice and style..." style="padding-bottom:44px;resize:vertical;"></textarea>
           <input type="file" id="style-file" class="hidden" accept=".txt,.docx,.pdf">
-          <button class="file-btn focusable" id="upload-btn">⬆ Upload File</button>
+          <button class="file-btn focusable" id="upload-btn">â¬† Upload File</button>
         </div>
         <p id="file-status" style="font-size:.8rem;color:var(--color-text-muted);margin-top:6px;min-height:18px;"></p>
       </div>
 
       <div class="action-row">
-        <button id="generate-hooks-btn" class="btn btn-primary focusable" style="padding:14px 36px;">✨ Generate Hooks</button>
+        <button id="generate-hooks-btn" class="btn btn-primary focusable" style="padding:14px 36px;">âœ¨ Generate Hooks</button>
       </div>
     </div>
   </div>
@@ -164,11 +164,11 @@
   <div id="state-hooks" class="hidden fade-in">
     <div class="panel">
       <h2 style="font-size:1.375rem;font-weight:800;margin-bottom:6px;">Pick Your Hook</h2>
-      <p style="color:var(--color-text-secondary);font-size:.9rem;">Choose the opener that best fits your style — this shapes the entire post.</p>
+      <p style="color:var(--color-text-secondary);font-size:.9rem;">Choose the opener that best fits your style â€” this shapes the entire post.</p>
       <div class="hooks-grid" id="hooks-output"></div>
       <div class="action-row">
-        <button id="write-post-btn" class="btn btn-primary focusable" disabled style="padding:13px 32px;">Write Full Post →</button>
-        <button id="redo-hooks-btn" class="btn btn-secondary focusable" style="padding:13px 24px;">🔄 Regenerate</button>
+        <button id="write-post-btn" class="btn btn-primary focusable" disabled style="padding:13px 32px;">Write Full Post â†’</button>
+        <button id="redo-hooks-btn" class="btn btn-secondary focusable" style="padding:13px 24px;">ðŸ”„ Regenerate</button>
       </div>
     </div>
   </div>
@@ -176,14 +176,14 @@
   <!-- STATE: Final Post -->
   <div id="state-post" class="hidden fade-in">
     <div class="panel">
-      <h2 style="font-size:1.375rem;font-weight:800;margin-bottom:6px;">Your Post Is Ready 🎉</h2>
+      <h2 style="font-size:1.375rem;font-weight:800;margin-bottom:6px;">Your Post Is Ready ðŸŽ‰</h2>
       <p style="color:var(--color-text-secondary);font-size:.9rem;margin-bottom:20px;">Edit below, then copy and post to LinkedIn.</p>
       <textarea id="post-output" class="post-textarea focusable"></textarea>
       <div class="char-count"><span id="char-count">0</span> characters</div>
       <div class="action-row">
-        <button id="copy-btn" class="btn btn-primary focusable" style="padding:13px 28px;">📋 Copy Post</button>
-        <button id="redo-post-btn" class="btn btn-secondary focusable" style="padding:13px 24px;">🔄 Regenerate</button>
-        <button id="start-over-btn" class="btn btn-ghost focusable" style="padding:13px 24px;">← Start Over</button>
+        <button id="copy-btn" class="btn btn-primary focusable" style="padding:13px 28px;">ðŸ“‹ Copy Post</button>
+        <button id="redo-post-btn" class="btn btn-secondary focusable" style="padding:13px 24px;">ðŸ”„ Regenerate</button>
+        <button id="start-over-btn" class="btn btn-ghost focusable" style="padding:13px 24px;">â† Start Over</button>
       </div>
     </div>
   </div>
@@ -210,210 +210,235 @@
       <button type="submit" class="btn btn-primary focusable" style="width:100%;margin-top:10px;padding:10px;font-size:.875rem;">Submit</button>
     </form>
     <div id="feedback-thanks" class="hidden" style="text-align:center;padding:12px 0;">
-      <p style="font-size:1.25rem;">🙏</p>
+      <p style="font-size:1.25rem;">ðŸ™</p>
       <p style="font-weight:700;">Thanks for your feedback!</p>
     </div>
   </div>
-  <button id="feedback-toggle" class="btn btn-secondary focusable" style="border-radius:999px;padding:10px 20px;font-size:.875rem;box-shadow:0 4px 20px rgba(0,0,0,.4);">💬 Feedback</button>
+  <button id="feedback-toggle" class="btn btn-secondary focusable" style="border-radius:999px;padding:10px 20px;font-size:.875rem;box-shadow:0 4px 20px rgba(0,0,0,.4);">ðŸ’¬ Feedback</button>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  // Elements
   const $ = id => document.getElementById(id);
   const states = ['state-initial','state-loading','state-hooks','state-post'];
-  
-  const nicheInput = $('niche-input'), topicInput = $('topic-input'), styleInput = $('style-input');
-  const suggestBtn = $('suggest-btn'), generateHooksBtn = $('generate-hooks-btn');
-  const writePostBtn = $('write-post-btn'), redoHooksBtn = $('redo-hooks-btn');
-  const copyBtn = $('copy-btn'), redoPostBtn = $('redo-post-btn'), startOverBtn = $('start-over-btn');
-  const hooksOutput = $('hooks-output'), postOutput = $('post-output'), charCount = $('char-count');
-  const loaderTitle = $('loader-title'), loaderSub = $('loader-sub');
-  const modal = $('modal'), modalTitle = $('modal-title'), modalInput = $('modal-input');
-  const modalCancel = $('modal-cancel'), modalSubmit = $('modal-submit');
-  const feedbackToggle = $('feedback-toggle'), feedbackPopup = $('feedback-popup');
-  const feedbackForm = $('feedback-form'), feedbackThanks = $('feedback-thanks');
-  const uploadBtn = $('upload-btn'), styleFile = $('style-file'), fileStatus = $('file-status');
 
-  let selectedHook = '', regenCtx = '', loadInterval;
+  const nicheInput=$('niche-input'),topicInput=$('topic-input'),styleInput=$('style-input');
+  const suggestBtn=$('suggest-btn'),generateHooksBtn=$('generate-hooks-btn');
+  const writePostBtn=$('write-post-btn'),redoHooksBtn=$('redo-hooks-btn');
+  const copyBtn=$('copy-btn'),redoPostBtn=$('redo-post-btn'),startOverBtn=$('start-over-btn');
+  const hooksOutput=$('hooks-output'),postOutput=$('post-output'),charCount=$('char-count');
+  const loaderTitle=$('loader-title'),loaderSub=$('loader-sub');
+  const modal=$('modal'),modalTitle=$('modal-title'),modalInput=$('modal-input');
+  const modalCancel=$('modal-cancel'),modalSubmit=$('modal-submit');
+  const feedbackToggle=$('feedback-toggle'),feedbackPopup=$('feedback-popup');
+  const feedbackForm=$('feedback-form'),feedbackThanks=$('feedback-thanks');
+  const uploadBtn=$('upload-btn'),styleFile=$('style-file'),fileStatus=$('file-status');
+
+  // State
+  let selectedHook='', regenCtx='', loadInterval;
+  let voiceProfile=''; // Prompt 2 output â€” persists across hook/post/refine/regen
 
   // Niches
-  const niches = ["SaaS Marketing","AI Startups","Venture Capital","Product Management","UX/UI Design","Web3 & Crypto","E-commerce","B2B Sales","Cybersecurity","Fintech","Healthtech","Edtech","Future of Work","Leadership","Personal Branding","Creator Economy","No-Code","DevOps","Data Science & ML","Bootstrapping","Growth Hacking","Content Marketing","SEO Strategy","Social Media Marketing","Email Marketing","Corporate Finance","Biotechnology","Gaming Industry","AR/VR","Real Estate Tech"];
-  const dl = $('niche-list');
-  niches.forEach(n => { const o = document.createElement('option'); o.value = n; dl.appendChild(o); });
+  const niches=["SaaS Marketing","AI Startups","Venture Capital","Product Management","UX/UI Design","Web3 & Crypto","E-commerce","B2B Sales","Cybersecurity","Fintech","Healthtech","Edtech","Future of Work","Leadership","Personal Branding","Creator Economy","No-Code","DevOps","Data Science & ML","Bootstrapping","Growth Hacking","Content Marketing","SEO Strategy","Social Media Marketing","Email Marketing","Corporate Finance","Biotechnology","Gaming Industry","AR/VR","Real Estate Tech"];
+  const dl=$('niche-list');
+  niches.forEach(n=>{const o=document.createElement('option');o.value=n;dl.appendChild(o);});
 
   // Progress
-  function setProgress(step) {
-    [1,2,3].forEach(i => {
-      $(`pb${i}`).className = 'pb-circle' + (i < step ? ' done' : i === step ? ' active' : '');
-      $(`pl${i}`).className = 'pb-label' + (i === step ? ' active' : '');
+  function setProgress(step){
+    [1,2,3].forEach(i=>{
+      $(`pb${i}`).className='pb-circle'+(i<step?' done':i===step?' active':'');
+      $(`pl${i}`).className='pb-label'+(i===step?' active':'');
     });
-    [1,2].forEach(i => { $(`pline${i}`).className = 'pb-line' + (i < step ? ' done' : ''); });
+    [1,2].forEach(i=>{$(`pline${i}`).className='pb-line'+(i<step?' done':'');});
   }
-
-  function showState(name) {
-    states.forEach(s => {
-      const el = document.getElementById(s);
-      if (s === name) { el.classList.remove('hidden'); el.classList.add('fade-in'); }
+  function showState(name){
+    states.forEach(s=>{
+      const el=document.getElementById(s);
+      if(s===name){el.classList.remove('hidden');el.classList.add('fade-in');}
       else el.classList.add('hidden');
     });
-    if (name === 'state-initial') setProgress(1);
-    if (name === 'state-hooks') setProgress(2);
-    if (name === 'state-post') setProgress(3);
+    if(name==='state-initial')setProgress(1);
+    if(name==='state-hooks')setProgress(2);
+    if(name==='state-post')setProgress(3);
   }
-
-  // Loading helpers
-  function startLoading(title, messages) {
+  function startLoading(title,messages){
     showState('state-loading');
-    loaderTitle.textContent = title;
-    loaderSub.textContent = messages[0];
-    let i = 0;
-    loadInterval = setInterval(() => { i = (i+1) % messages.length; loaderSub.textContent = messages[i]; }, 2000);
+    loaderTitle.textContent=title;
+    loaderSub.textContent=messages[0];
+    let i=0;
+    loadInterval=setInterval(()=>{i=(i+1)%messages.length;loaderSub.textContent=messages[i];},2200);
   }
-  function stopLoading() { clearInterval(loadInterval); }
+  function stopLoading(){clearInterval(loadInterval);}
 
-  // File Upload
-  uploadBtn.addEventListener('click', () => styleFile.click());
-  styleFile.addEventListener('change', async (e) => {
-    const file = e.target.files[0]; if (!file) return;
-    fileStatus.textContent = `Loading ${file.name}...`;
-    try {
-      styleInput.value = await file.text();
-      fileStatus.textContent = `✓ Loaded: ${file.name}`;
-      fileStatus.style.color = '#34d399';
-    } catch { fileStatus.textContent = 'Failed to read file.'; fileStatus.style.color = '#f87171'; }
-    setTimeout(() => { fileStatus.textContent = ''; fileStatus.style.color = ''; }, 3000);
+  // File upload
+  uploadBtn.addEventListener('click',()=>styleFile.click());
+  styleFile.addEventListener('change',async(e)=>{
+    const file=e.target.files[0];if(!file)return;
+    fileStatus.textContent=`Loading ${file.name}...`;
+    try{styleInput.value=await file.text();fileStatus.textContent=`âœ“ Loaded: ${file.name}`;fileStatus.style.color='#34d399';}
+    catch{fileStatus.textContent='Failed to read file.';fileStatus.style.color='#f87171';}
+    setTimeout(()=>{fileStatus.textContent='';fileStatus.style.color='';},3000);
   });
 
-  // Char counter
-  postOutput.addEventListener('input', () => { charCount.textContent = postOutput.value.length; });
+  postOutput.addEventListener('input',()=>{charCount.textContent=postOutput.value.length;});
 
-  // Suggest Topics
-  suggestBtn.addEventListener('click', async () => {
-    const niche = nicheInput.value.trim();
-    if (!niche) { alert('Please enter your niche first.'); return; }
-    startLoading('Suggesting Topics...', ['Analyzing your niche...', 'Finding trending ideas...']);
-    const prompt = `You are a LinkedIn content strategist. Generate exactly 5 trending LinkedIn post ideas for the niche: "${niche}". Return ONLY a valid JSON array: [{"title":"...","summary":"..."}]. No other text.`;
-    try {
-      const raw = await callApi(prompt, 'haiku');
-      const topics = JSON.parse(extractJson(raw));
-      const container = $('topic-suggestions');
-      container.innerHTML = '';
-      topics.forEach(t => {
-        const btn = document.createElement('button');
-        btn.className = 'topic-btn focusable';
-        btn.innerHTML = `<strong>${t.title}</strong><span>${t.summary}</span>`;
-        btn.onclick = () => { topicInput.value = t.title; };
+  // â”€â”€ API helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const PROD_API='https://roftx-1.onrender.com';
+  const API_BASE=(window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1')
+    ?'http://localhost:3000':PROD_API;
+
+  async function callGenerateApi(type, data){
+    const res=await fetch(`${API_BASE}/api/generate`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({type,...data})
+    });
+    const json=await res.json();
+    if(!res.ok)throw new Error(json.error||`API error ${res.status}`);
+    return json;
+  }
+
+  // â”€â”€ Prompt 1: Topic Suggestions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  suggestBtn.addEventListener('click',async()=>{
+    const niche=nicheInput.value.trim();
+    if(!niche){alert('Please enter your niche first.');return;}
+    startLoading('Finding Topics...',['Scanning trending discussions...','Identifying engagement triggers...','Curating for your niche...']);
+    try{
+      const data=await callGenerateApi('topics',{niche});
+      const container=$('topic-suggestions');
+      container.innerHTML='';
+      (data.topics||[]).forEach(t=>{
+        const btn=document.createElement('button');
+        btn.className='topic-btn focusable';
+        btn.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><span style="font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:99px;background:rgba(99,102,241,.2);color:#a5b4fc;">${t.triggerType}</span><strong style="font-size:.875rem;">${t.premise}</strong></div><span style="font-size:.78rem;color:var(--color-text-muted);">${t.whyItWorks}</span>`;
+        btn.onclick=()=>{topicInput.value=t.premise;};
         container.appendChild(btn);
       });
       showState('state-initial');
-    } catch(err) { console.error(err); alert('Could not fetch topics. Try again.'); showState('state-initial'); }
-    finally { stopLoading(); }
+    }catch(err){console.error(err);alert('Could not fetch topics. Try again.');showState('state-initial');}
+    finally{stopLoading();}
   });
 
-  // Generate Hooks
-  generateHooksBtn.addEventListener('click', () => generateHooks());
-  async function generateHooks(extra = '') {
-    if (!nicheInput.value.trim() || !topicInput.value.trim()) { alert('Please fill in Niche and Topic.'); return; }
-    startLoading('Generating Hooks...', ['Analyzing your style...', 'Crafting scroll-stopping openers...', 'Applying psychology triggers...']);
-    const prompt = `You are HOOK-CRAFT AI. Generate exactly 3 powerful LinkedIn hooks for: Niche: ${nicheInput.value.trim()}, Topic: ${topicInput.value.trim()}, Voice sample: ${styleInput.value.trim() || 'not provided'}. ${extra ? 'Extra instructions: '+extra : ''}. Return ONLY a JSON array of 3 strings. No other text.`;
-    try {
-      const raw = await callApi(prompt, 'haiku');
-      const hooks = JSON.parse(extractJson(raw));
-      renderHooks(hooks);
+  // â”€â”€ Prompt 2 + 3: Voice Analysis â†’ Hook Generator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  generateHooksBtn.addEventListener('click',()=>generateHooks());
+  async function generateHooks(extra=''){
+    if(!nicheInput.value.trim()||!topicInput.value.trim()){alert('Please fill in Niche and Topic.');return;}
+    const sample=styleInput.value.trim();
+    try{
+      // Prompt 2 â€” Voice Analysis (only if sample >= 50 chars)
+      if(sample.length>=50){
+        startLoading('Analysing Your Voice...',['Reading your writing style...','Identifying tone & rhythm...','Building your voice profile...']);
+        const vd=await callGenerateApi('voice',{writingSample:sample});
+        voiceProfile=vd.voiceProfile||'';
+      } else {
+        voiceProfile='';
+      }
+      // Prompt 3 â€” Hook Generator
+      startLoading('Generating Hooks...',['Applying psychology triggers...','Crafting scroll-stopping openers...','Voice-matching your style...','Testing hook frameworks...']);
+      const hd=await callGenerateApi('hooks',{niche:nicheInput.value.trim(),topic:topicInput.value.trim(),voiceProfile,extra});
+      renderHooks(hd.hooks||[]);
       showState('state-hooks');
-    } catch(err) { console.error(err); alert('Hook generation failed. Try again.'); showState('state-initial'); }
-    finally { stopLoading(); }
+    }catch(err){console.error(err);alert('Hook generation failed. Try again.');showState('state-initial');}
+    finally{stopLoading();}
   }
 
-  function renderHooks(hooks) {
-    hooksOutput.innerHTML = ''; selectedHook = ''; writePostBtn.disabled = true;
-    hooks.forEach((h, i) => {
-      const card = document.createElement('button');
-      card.className = 'hook-card focusable';
-      card.innerHTML = `<div class="hook-num">Option ${i+1}</div>${h}`;
-      card.onclick = () => {
-        document.querySelectorAll('.hook-card').forEach(c => c.classList.remove('selected'));
+  function renderHooks(hooks){
+    hooksOutput.innerHTML='';selectedHook='';writePostBtn.disabled=true;
+    if(!hooks.length){hooksOutput.innerHTML='<p style="color:var(--color-text-muted);text-align:center;padding:24px;">No hooks generated. Try again.</p>';return;}
+    const colors={'CONTRARIAN':'#f97316','CURIOSITY GAP':'#a78bfa','DATA / SPECIFICITY':'#34d399'};
+    hooks.forEach((h,i)=>{
+      const card=document.createElement('button');
+      card.className='hook-card focusable';
+      const c=colors[h.type]||'#6366f1';
+      card.innerHTML=`<div class="hook-num" style="color:${c};">${h.type||`Option ${i+1}`}</div><div style="font-size:.9375rem;line-height:1.6;margin-bottom:10px;">${h.text}</div><div style="font-size:.78rem;color:var(--color-text-muted);border-top:1px solid var(--color-border);padding-top:8px;">ðŸ’¡ ${h.whyItWorks}</div>`;
+      card.onclick=()=>{
+        document.querySelectorAll('.hook-card').forEach(c=>c.classList.remove('selected'));
         card.classList.add('selected');
-        selectedHook = h;
-        writePostBtn.disabled = false;
+        selectedHook=h.text;
+        writePostBtn.disabled=false;
       };
       hooksOutput.appendChild(card);
     });
   }
 
-  // Write Post
-  writePostBtn.addEventListener('click', () => writePost());
-  async function writePost(extra = '') {
-    if (!selectedHook) { alert('Please select a hook first.'); return; }
-    startLoading('Drafting Your Post...', ['Applying E.N.G.A.G.E framework...', 'Matching your voice...', 'Optimising for engagement...', 'Adding a strong CTA...']);
-    const prompt = `You are an elite LinkedIn ghostwriter. Write a full post using the E.N.G.A.G.E framework. Hook: "${selectedHook}", Topic: ${topicInput.value.trim()}, Niche: ${nicheInput.value.trim()}, Voice sample: ${styleInput.value.trim() || 'not provided'}. ${extra ? 'Extra: '+extra : ''}. Rules: 220-280 words, 4-6 short paragraphs, end with a question, include 3-4 popular hashtags + 4 niche hashtags + #RoftX. Write only the post body (do not repeat the hook). Sound human, not robotic.`;
-    try {
-      const body = await callApi(prompt, 'sonnet');
-      postOutput.value = `${selectedHook}\n\n${body}`;
-      charCount.textContent = postOutput.value.length;
+  // â”€â”€ Prompt 4: Full Post Generator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  writePostBtn.addEventListener('click',()=>writePost());
+  async function writePost(){
+    if(!selectedHook){alert('Please select a hook first.');return;}
+    startLoading('Drafting Your Post...',['Applying E.N.G.A.G.E framework...','Matching your voice...','Optimising for engagement...','Adding a strong CTA...']);
+    try{
+      const data=await callGenerateApi('post',{niche:nicheInput.value.trim(),topic:topicInput.value.trim(),chosenHook:selectedHook,voiceProfile});
+      postOutput.value=data.post||'';
+      charCount.textContent=postOutput.value.length;
       showState('state-post');
-    } catch(err) { console.error(err); alert('Post generation failed. Try again.'); showState('state-hooks'); }
-    finally { stopLoading(); }
+    }catch(err){console.error(err);alert('Post generation failed. Try again.');showState('state-hooks');}
+    finally{stopLoading();}
   }
 
-  // Redo / Start Over
-  redoHooksBtn.addEventListener('click', () => openModal('hooks'));
-  redoPostBtn.addEventListener('click', () => openModal('post'));
-  startOverBtn.addEventListener('click', () => { selectedHook=''; $('topic-suggestions').innerHTML=''; showState('state-initial'); });
+  // Start over / redo hooks
+  redoHooksBtn.addEventListener('click',()=>openModal('hooks'));
+  startOverBtn.addEventListener('click',()=>{selectedHook='';voiceProfile='';$('topic-suggestions').innerHTML='';showState('state-initial');});
 
   // Copy
-  copyBtn.addEventListener('click', () => {
-    navigator.clipboard.writeText(postOutput.value).then(() => {
-      copyBtn.textContent = '✓ Copied!';
-      setTimeout(() => copyBtn.textContent = '📋 Copy Post', 2000);
+  copyBtn.addEventListener('click',()=>{
+    navigator.clipboard.writeText(postOutput.value).then(()=>{
+      copyBtn.textContent='âœ“ Copied!';
+      setTimeout(()=>copyBtn.textContent='ðŸ“‹ Copy Post',2000);
     });
   });
 
-  // Modal
-  function openModal(ctx) { regenCtx = ctx; modalTitle.textContent = ctx === 'hooks' ? 'Refine Your Hooks' : 'Refine Your Post'; modal.classList.remove('hidden'); }
-  modalCancel.addEventListener('click', () => { modal.classList.add('hidden'); modalInput.value = ''; });
-  modalSubmit.addEventListener('click', () => {
-    const instr = modalInput.value.trim();
-    modal.classList.add('hidden'); modalInput.value = '';
-    if (regenCtx === 'hooks') generateHooks(instr);
-    else writePost(instr);
+  // â”€â”€ Modal (Prompt 5: Refine / Prompt 6: Regenerate) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  redoPostBtn.addEventListener('click',()=>openModal('post'));
+  function openModal(ctx){
+    regenCtx=ctx;
+    modalTitle.textContent=ctx==='hooks'?'Refine Your Hooks':'Refine or Regenerate Your Post';
+    if(ctx==='post'){
+      modalInput.placeholder='"Make it shorter", "Add emojis", "Make the hook stronger", or leave blank for a full fresh version.';
+    } else {
+      modalInput.placeholder='"Make it punchier", "Try a different angle", "Make it shorter"...';
+    }
+    modal.classList.remove('hidden');
+  }
+  modalCancel.addEventListener('click',()=>{modal.classList.add('hidden');modalInput.value='';});
+  modalSubmit.addEventListener('click',async()=>{
+    const instr=modalInput.value.trim();
+    modal.classList.add('hidden');modalInput.value='';
+    if(regenCtx==='hooks'){
+      generateHooks(instr);
+    } else {
+      // Prompt 5 (refine) if instruction given, Prompt 6 (regenerate) if blank
+      if(instr){
+        startLoading('Refining Your Post...',['Applying your instruction...','Preserving your voice...','Surgical edit in progress...']);
+        try{
+          const data=await callGenerateApi('refine',{currentPost:postOutput.value,instruction:instr,voiceProfile});
+          postOutput.value=data.post||postOutput.value;
+          charCount.textContent=postOutput.value.length;
+          showState('state-post');
+        }catch(err){console.error(err);alert('Refinement failed. Try again.');showState('state-post');}
+        finally{stopLoading();}
+      } else {
+        startLoading('Writing a Fresh Version...',['Finding a new angle...','Rewriting from scratch...','Voice-matching throughout...']);
+        try{
+          const data=await callGenerateApi('regenerate',{currentPost:postOutput.value,niche:nicheInput.value.trim(),topic:topicInput.value.trim(),voiceProfile});
+          postOutput.value=data.post||postOutput.value;
+          charCount.textContent=postOutput.value.length;
+          showState('state-post');
+        }catch(err){console.error(err);alert('Regeneration failed. Try again.');showState('state-post');}
+        finally{stopLoading();}
+      }
+    }
   });
 
-  // Feedback
-  feedbackToggle.addEventListener('click', () => feedbackPopup.classList.toggle('hidden'));
-  feedbackForm.addEventListener('submit', (e) => {
+  // Feedback widget
+  feedbackToggle.addEventListener('click',()=>feedbackPopup.classList.toggle('hidden'));
+  feedbackForm.addEventListener('submit',(e)=>{
     e.preventDefault();
-    const text = $('feedback-input').value.trim(); if (!text) return;
-    const url = 'https://script.google.com/macros/s/AKfycbz8RGIS4QZstbi0JSmVvGcZGZH0RhyGMRIsGnIIoaAlRjPH6QY82L9OpVIljfDVTrMgFQ/exec';
-    const fd = new FormData(); fd.append('feedback', text);
-    fetch(url, { method:'POST', body:fd }).catch(()=>{});
-    feedbackForm.classList.add('hidden'); feedbackThanks.classList.remove('hidden');
-    setTimeout(() => { feedbackPopup.classList.add('hidden'); feedbackForm.classList.remove('hidden'); feedbackThanks.classList.add('hidden'); feedbackForm.reset(); }, 3000);
+    const text=$('feedback-input').value.trim();if(!text)return;
+    const url='https://script.google.com/macros/s/AKfycbz8RGIS4QZstbi0JSmVvGcZGZH0RhyGMRIsGnIIoaAlRjPH6QY82L9OpVIljfDVTrMgFQ/exec';
+    const fd=new FormData();fd.append('feedback',text);
+    fetch(url,{method:'POST',body:fd}).catch(()=>{});
+    feedbackForm.classList.add('hidden');feedbackThanks.classList.remove('hidden');
+    setTimeout(()=>{feedbackPopup.classList.add('hidden');feedbackForm.classList.remove('hidden');feedbackThanks.classList.add('hidden');feedbackForm.reset();},3000);
   });
-
-  // API
-  function extractJson(s) {
-    const m1 = s.match(/```(?:json)?\s*(\[[\s\S]*?\])\s*```/); if (m1) return m1[1];
-    const m2 = s.match(/\[[\s\S]*?\]/); if (m2) return m2[0];
-    return s.trim();
-  }
-
-  const PROD_API = 'https://roftx-1.onrender.com';
-  const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:3000'
-    : PROD_API;
-
-  async function callApi(prompt, model = 'haiku') {
-    const res = await fetch(`${API_BASE}/api/gemini`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ contents:[{parts:[{text:prompt}]}], model })
-    });
-    if (!res.ok) throw new Error(`API ${res.status}`);
-    const data = await res.json();
-    if (data.candidates?.[0]?.content?.parts?.[0]?.text) return data.candidates[0].content.parts[0].text;
-    throw new Error('No content');
-  }
 });
 </script>
 </body>
