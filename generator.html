@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RoftX â€“ AI Post Generator</title>
+  <title>RoftX – AI Post Generator</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -136,13 +136,13 @@
         <div class="input-wrap">
           <textarea id="style-input" class="input-field focusable" rows="5" placeholder="Paste a previous LinkedIn post so the AI can match your exact voice and style..." style="padding-bottom:44px;resize:vertical;"></textarea>
           <input type="file" id="style-file" class="hidden" accept=".txt,.docx,.pdf">
-          <button class="file-btn focusable" id="upload-btn">â¬† Upload File</button>
+          <button class="file-btn focusable" id="upload-btn">⬆ Upload File</button>
         </div>
         <p id="file-status" style="font-size:.8rem;color:var(--color-text-muted);margin-top:6px;min-height:18px;"></p>
       </div>
 
       <div class="action-row">
-        <button id="generate-hooks-btn" class="btn btn-primary focusable" style="padding:14px 36px;">âœ¨ Generate Hooks</button>
+        <button id="generate-hooks-btn" class="btn btn-primary focusable" style="padding:14px 36px;">✨ Generate Hooks</button>
       </div>
     </div>
   </div>
@@ -164,11 +164,11 @@
   <div id="state-hooks" class="hidden fade-in">
     <div class="panel">
       <h2 style="font-size:1.375rem;font-weight:800;margin-bottom:6px;">Pick Your Hook</h2>
-      <p style="color:var(--color-text-secondary);font-size:.9rem;">Choose the opener that best fits your style â€” this shapes the entire post.</p>
+      <p style="color:var(--color-text-secondary);font-size:.9rem;">Choose the opener that best fits your style — this shapes the entire post.</p>
       <div class="hooks-grid" id="hooks-output"></div>
       <div class="action-row">
-        <button id="write-post-btn" class="btn btn-primary focusable" disabled style="padding:13px 32px;">Write Full Post â†’</button>
-        <button id="redo-hooks-btn" class="btn btn-secondary focusable" style="padding:13px 24px;">ðŸ”„ Regenerate</button>
+        <button id="write-post-btn" class="btn btn-primary focusable" disabled style="padding:13px 32px;">Write Full Post →</button>
+        <button id="redo-hooks-btn" class="btn btn-secondary focusable" style="padding:13px 24px;">🔄 Regenerate</button>
       </div>
     </div>
   </div>
@@ -176,14 +176,14 @@
   <!-- STATE: Final Post -->
   <div id="state-post" class="hidden fade-in">
     <div class="panel">
-      <h2 style="font-size:1.375rem;font-weight:800;margin-bottom:6px;">Your Post Is Ready ðŸŽ‰</h2>
+      <h2 style="font-size:1.375rem;font-weight:800;margin-bottom:6px;">Your Post Is Ready 🎉</h2>
       <p style="color:var(--color-text-secondary);font-size:.9rem;margin-bottom:20px;">Edit below, then copy and post to LinkedIn.</p>
       <textarea id="post-output" class="post-textarea focusable"></textarea>
       <div class="char-count"><span id="char-count">0</span> characters</div>
       <div class="action-row">
-        <button id="copy-btn" class="btn btn-primary focusable" style="padding:13px 28px;">ðŸ“‹ Copy Post</button>
-        <button id="redo-post-btn" class="btn btn-secondary focusable" style="padding:13px 24px;">ðŸ”„ Regenerate</button>
-        <button id="start-over-btn" class="btn btn-ghost focusable" style="padding:13px 24px;">â† Start Over</button>
+        <button id="copy-btn" class="btn btn-primary focusable" style="padding:13px 28px;">📋 Copy Post</button>
+        <button id="redo-post-btn" class="btn btn-secondary focusable" style="padding:13px 24px;">🔄 Regenerate</button>
+        <button id="start-over-btn" class="btn btn-ghost focusable" style="padding:13px 24px;">← Start Over</button>
       </div>
     </div>
   </div>
@@ -210,11 +210,11 @@
       <button type="submit" class="btn btn-primary focusable" style="width:100%;margin-top:10px;padding:10px;font-size:.875rem;">Submit</button>
     </form>
     <div id="feedback-thanks" class="hidden" style="text-align:center;padding:12px 0;">
-      <p style="font-size:1.25rem;">ðŸ™</p>
+      <p style="font-size:1.25rem;">🙏</p>
       <p style="font-weight:700;">Thanks for your feedback!</p>
     </div>
   </div>
-  <button id="feedback-toggle" class="btn btn-secondary focusable" style="border-radius:999px;padding:10px 20px;font-size:.875rem;box-shadow:0 4px 20px rgba(0,0,0,.4);">ðŸ’¬ Feedback</button>
+  <button id="feedback-toggle" class="btn btn-secondary focusable" style="border-radius:999px;padding:10px 20px;font-size:.875rem;box-shadow:0 4px 20px rgba(0,0,0,.4);">💬 Feedback</button>
 </div>
 
 <script>
@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
   styleFile.addEventListener('change',async(e)=>{
     const file=e.target.files[0];if(!file)return;
     fileStatus.textContent=`Loading ${file.name}...`;
-    try{styleInput.value=await file.text();fileStatus.textContent=`âœ“ Loaded: ${file.name}`;fileStatus.style.color='#34d399';}
+    try{styleInput.value=await file.text();fileStatus.textContent=`✓ Loaded: ${file.name}`;fileStatus.style.color='#34d399';}
     catch{fileStatus.textContent='Failed to read file.';fileStatus.style.color='#f87171';}
     setTimeout(()=>{fileStatus.textContent='';fileStatus.style.color='';},3000);
   });
@@ -349,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const card=document.createElement('button');
       card.className='hook-card focusable';
       const c=colors[h.type]||'#6366f1';
-      card.innerHTML=`<div class="hook-num" style="color:${c};">${h.type||`Option ${i+1}`}</div><div style="font-size:.9375rem;line-height:1.6;margin-bottom:10px;">${h.text}</div><div style="font-size:.78rem;color:var(--color-text-muted);border-top:1px solid var(--color-border);padding-top:8px;">ðŸ’¡ ${h.whyItWorks}</div>`;
+      card.innerHTML=`<div class="hook-num" style="color:${c};">${h.type||`Option ${i+1}`}</div><div style="font-size:.9375rem;line-height:1.6;margin-bottom:10px;">${h.text}</div><div style="font-size:.78rem;color:var(--color-text-muted);border-top:1px solid var(--color-border);padding-top:8px;">💡 ${h.whyItWorks}</div>`;
       card.onclick=()=>{
         document.querySelectorAll('.hook-card').forEach(c=>c.classList.remove('selected'));
         card.classList.add('selected');
@@ -381,8 +381,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Copy
   copyBtn.addEventListener('click',()=>{
     navigator.clipboard.writeText(postOutput.value).then(()=>{
-      copyBtn.textContent='âœ“ Copied!';
-      setTimeout(()=>copyBtn.textContent='ðŸ“‹ Copy Post',2000);
+      copyBtn.textContent='✓ Copied!';
+      setTimeout(()=>copyBtn.textContent='📋 Copy Post',2000);
     });
   });
 
