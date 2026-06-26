@@ -434,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     const text=$('feedback-input').value.trim();if(!text)return;
     const url='https://script.google.com/macros/s/AKfycbz8RGIS4QZstbi0JSmVvGcZGZH0RhyGMRIsGnIIoaAlRjPH6QY82L9OpVIljfDVTrMgFQ/exec';
-    const fd=new FormData();fd.append('feedback',text);
+    const fd=new FormData();fd.append('feedback-input',text);
     fetch(url,{method:'POST',mode:'no-cors',body:fd}).catch(()=>{});
     feedbackForm.classList.add('hidden');feedbackThanks.classList.remove('hidden');
     setTimeout(()=>{feedbackPopup.classList.add('hidden');feedbackForm.classList.remove('hidden');feedbackThanks.classList.add('hidden');feedbackForm.reset();},3000);
