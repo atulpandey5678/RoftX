@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // State
   let selectedHook='', regenCtx='', loadInterval;
-  let voiceProfile=''; // Prompt 2 output â€” persists across hook/post/refine/regen
+  let voiceProfile=''; // Prompt 2 output — persists across hook/post/refine/regen
 
   // Niches
   const niches=["SaaS Marketing","AI Startups","Venture Capital","Product Management","UX/UI Design","Web3 & Crypto","E-commerce","B2B Sales","Cybersecurity","Fintech","Healthtech","Edtech","Future of Work","Leadership","Personal Branding","Creator Economy","No-Code","DevOps","Data Science & ML","Bootstrapping","Growth Hacking","Content Marketing","SEO Strategy","Social Media Marketing","Email Marketing","Corporate Finance","Biotechnology","Gaming Industry","AR/VR","Real Estate Tech"];
@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   postOutput.addEventListener('input',()=>{charCount.textContent=postOutput.value.length;});
 
-  // â”€â”€ API helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── API helper ────────────────────────────────────────────────────────────
   const PROD_API='https://roftx-1.onrender.com';
   const API_BASE=(window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1')
     ?'http://localhost:3000':PROD_API;
@@ -297,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return json;
   }
 
-  // â”€â”€ Prompt 1: Topic Suggestions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Prompt 1: Topic Suggestions ───────────────────────────────────────────
   suggestBtn.addEventListener('click',async()=>{
     const niche=nicheInput.value.trim();
     if(!niche){alert('Please enter your niche first.');return;}
@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
     finally{stopLoading();}
   });
 
-  // â”€â”€ Prompt 2 + 3: Voice Analysis â†’ Hook Generator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Prompt 2 + 3: Voice Analysis → Hook Generator ───────────────────────â”€
   generateHooksBtn.addEventListener('click',()=>generateHooks());
   async function generateHooks(extra=''){
     if(!nicheInput.value.trim()||!topicInput.value.trim()){alert('Please fill in Niche and Topic.');return;}
@@ -360,7 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // â”€â”€ Prompt 4: Full Post Generator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Prompt 4: Full Post Generator ─────────────────────────────────────────
   writePostBtn.addEventListener('click',()=>writePost());
   async function writePost(){
     if(!selectedHook){alert('Please select a hook first.');return;}
@@ -386,7 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // â”€â”€ Modal (Prompt 5: Refine / Prompt 6: Regenerate) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Modal (Prompt 5: Refine / Prompt 6: Regenerate) ─────────────────────
   redoPostBtn.addEventListener('click',()=>openModal('post'));
   function openModal(ctx){
     regenCtx=ctx;
