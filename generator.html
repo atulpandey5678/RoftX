@@ -234,6 +234,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const feedbackForm=$('feedback-form'),feedbackThanks=$('feedback-thanks');
   const uploadBtn=$('upload-btn'),styleFile=$('style-file'),fileStatus=$('file-status');
 
+  // Enforce Authentication
+  const token = localStorage.getItem('roftx_token');
+  if (!token) {
+    window.location.href = 'signup.html';
+    return;
+  }
+
   // State
   let selectedHook='', regenCtx='', loadInterval;
   let voiceProfile=''; // Prompt 2 output — persists across hook/post/refine/regen
@@ -289,7 +296,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function callGenerateApi(type, data){
     const res=await fetch(`${API_BASE}/api/generate`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body:JSON.stringify({type,...data})
     });
     const json=await res.json();

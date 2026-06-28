@@ -27,6 +27,7 @@ import { OAuth2Client } from 'google-auth-library';
 import fetch from 'node-fetch';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import jwt from 'jsonwebtoken';
 
 const { Pool } = pg;
 
@@ -38,6 +39,7 @@ const DATABASE_URL        = process.env.DATABASE_URL?.trim();
 const DATABASE_PASSWORD   = process.env.DATABASE_PASSWORD?.trim();
 const NODE_ENV            = process.env.NODE_ENV || 'development';
 const PORT                = process.env.PORT || 3000;
+const JWT_SECRET          = process.env.JWT_SECRET || 'roftx_default_secret_please_change_in_prod';
 
 // Determine which AI providers are available
 const hasOpenAI = !!OPENAI_API_KEY;
@@ -352,8 +354,30 @@ app.post('/api/auth/google', authLimiter, async (req, res) => {
     }
   }
 
-  return res.status(200).json({ success: true, user });
+  // Issue JWT Token
+  const tokenPayload = {
+    userId: user.id || null,
+    googleId: user.google_id,
+    email: user.email,
+  };
+  const sessionToken = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
+
+  return res.status(200).json({ success: true, user, token: sessionToken });
 });
+
+// ─── Authentication Middleware ────────────────────────────────────────────────
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token) return res.status(401).json({ error: 'Access denied. Missing authentication token.' });
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Invalid or expired session. Please log in again.' });
+    req.user = user;
+    next();
+  });
+}
 
 // ─── AI Generation ────────────────────────────────────────────────────────────
 app.post('/api/gemini', aiLimiter, async (req, res) => {
@@ -392,11 +416,11 @@ app.post('/api/gemini', aiLimiter, async (req, res) => {
 // ─── Response Parsers ────────────────────────────────────────────────────────
 function parseTopics(text) {
   const topics = [];
-  const blocks = text.split(/TOPIC \d+/i).filter(b => b.trim());
+  const blocks = text.split(/CONVERSATION\s*\[?\d+\]?:?/i).filter(b => b.trim());
   for (const block of blocks) {
-    const triggerMatch = block.match(/Trigger type:\s*(.+)/i);
-    const premiseMatch = block.match(/Premise:\s*(.+)/i);
-    const whyMatch     = block.match(/Why it works:\s*(.+)/i);
+    const triggerMatch = block.match(/Primary Trigger:\s*([^\n]+)/i);
+    const premiseMatch = block.match(/Conversation Premise:\s*([\s\S]+?)(?=\nUnique Perspective:|\nWhy This Stops The Scroll:|$)/i);
+    const whyMatch     = block.match(/Why This Stops The Scroll:\s*([\s\S]+?)(?=\nWhy Professionals Will Comment:|$)/i);
     if (premiseMatch) topics.push({
       triggerType:  (triggerMatch?.[1] || 'INSIGHT').trim().toUpperCase(),
       premise:      premiseMatch[1].trim(),
@@ -409,13 +433,25 @@ function parseTopics(text) {
 function parseHooks(text) {
   const hooks  = [];
   const types  = ['CONTRARIAN', 'CURIOSITY GAP', 'DATA / SPECIFICITY'];
-  const blocks = text.split(/HOOK \d+ ?[\u2014\u2013-]/i).filter(b => b.trim());
+  const blocks = text.split(/HOOK\s*\[?\d+\]?\s*[\u2014\u2013:\-]/i).filter(b => b.trim());
   blocks.forEach((block, i) => {
-    const cleaned  = block.replace(/^(CONTRARIAN|CURIOSITY GAP|DATA[^\n]*)\n/i, '').trim();
+    // The block now starts with " [FAMILY NAME]\n[Hook text]"
+    const lines = block.trim().split('\n');
+    let familyName = types[i];
+    let contentStart = 0;
+    
+    // If the first line looks like a family name (all caps or short), extract it
+    if (lines[0] && lines[0].trim().length < 50 && !lines[0].includes('Why this works')) {
+      familyName = lines[0].trim();
+      contentStart = 1;
+    }
+    
+    const cleaned = lines.slice(contentStart).join('\n').trim();
     const whyMatch = cleaned.match(/Why this works:\s*(.+)/is);
     const hookText = cleaned.replace(/Why this works:[\s\S]*/i, '').trim();
+    
     if (hookText) hooks.push({
-      type:        types[i] || `HOOK ${i + 1}`,
+      type:        familyName || `HOOK ${i + 1}`,
       text:        hookText,
       whyItWorks:  (whyMatch?.[1] || '').trim(),
     });
@@ -439,7 +475,7 @@ const TIER_MAP = {
   regenerate: 'quality',
 };
 
-app.post('/api/generate', aiLimiter, async (req, res) => {
+app.post('/api/generate', aiLimiter, authenticateToken, async (req, res) => {
   const { type, niche, topic, writingSample, voiceProfile,
           chosenHook, currentPost, instruction } = req.body;
 
@@ -504,7 +540,10 @@ app.post('/api/generate', aiLimiter, async (req, res) => {
     switch (type) {
       case 'topics': {
         const topics = parseTopics(raw);
-        if (!topics.length) throw new Error('Could not parse topics from AI response');
+        if (!topics.length) {
+          console.error("RAW AI RESPONSE FOR TOPICS:", raw);
+          throw new Error('Could not parse topics from AI response');
+        }
         return res.json({ topics });
       }
       case 'voice':

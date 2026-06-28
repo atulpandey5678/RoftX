@@ -140,6 +140,7 @@
         });
         const data = await res.json();
         if (res.ok && data.success) {
+          localStorage.setItem('roftx_token', data.token); // Save JWT for API calls
           msg.textContent = '✓ Signed in! Redirecting…';
           msg.style.color = '#34d399';
           setTimeout(() => window.location.href = 'generator.html', 800);
