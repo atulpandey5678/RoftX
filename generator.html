@@ -444,9 +444,27 @@ document.addEventListener('DOMContentLoaded', () => {
   feedbackForm.addEventListener('submit',(e)=>{
     e.preventDefault();
     const text=$('feedback-input').value.trim();if(!text)return;
-    const url='https://script.google.com/macros/s/AKfycbz8RGIS4QZstbi0JSmVvGcZGZH0RhyGMRIsGnIIoaAlRjPH6QY82L9OpVIljfDVTrMgFQ/exec';
-    const fd=new FormData();fd.append('feedback-input',text);
-    fetch(url,{method:'POST',mode:'no-cors',body:fd}).catch(()=>{});
+    const url='https://script.google.com/macros/s/AKfycbwNMPsaPDqKISYzjfgpFfqRp0jUbxsNcYMcZkmQIuiV7PvIzcpM0HUoLaa8VvbRozkR/exec';
+    
+    // Decode user email from JWT token
+    let userEmail = 'Unknown';
+    try {
+      if(token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        userEmail = payload.email || 'Unknown';
+      }
+    } catch(err) {}
+
+    const params = new URLSearchParams();
+    params.append('feedback-input', text);
+    params.append('email', userEmail);
+    params.append('niche', nicheInput.value.trim() || 'N/A');
+    params.append('topic', topicInput.value.trim() || 'N/A');
+    params.append('hook', selectedHook || 'N/A');
+    params.append('post', postOutput.value.trim() || 'N/A');
+    params.append('userAgent', navigator.userAgent);
+
+    fetch(url,{method:'POST',mode:'no-cors',body:params}).catch(()=>{});
     feedbackForm.classList.add('hidden');feedbackThanks.classList.remove('hidden');
     setTimeout(()=>{feedbackPopup.classList.add('hidden');feedbackForm.classList.remove('hidden');feedbackThanks.classList.add('hidden');feedbackForm.reset();},3000);
   });
