@@ -13,14 +13,6 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 import express from 'express';
-import {
-  buildTopicSuggestionsPrompt,
-  buildVoiceAnalysisPrompt,
-  buildHookGeneratorPrompt,
-  buildFullPostPrompt,
-  buildRefinementPrompt,
-  buildRegenerationPrompt,
-} from './prompts.js';
 import cors from 'cors';
 import pg from 'pg';
 import { OAuth2Client } from 'google-auth-library';
@@ -28,6 +20,23 @@ import fetch from 'node-fetch';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
+import {
+  validateStartupSecret,
+  JWT_SECRET,
+  ALLOWED_ORIGINS,
+  PLANS,
+  NODE_ENV,
+  DEFAULT_JWT_SECRET,
+  BILLING_ENABLED,
+} from './config.js';
+import { ensureSchema } from './db/schema.js';
+// Authentication & ownership resolution (single source of truth) and the
+// platform service modules wired in below (task 9.2).
+import { authenticateToken, resolveOwnerUserId } from './middleware/auth.js';
+import { createPersistence } from './db/persistence.js';
+import { createQuotaService } from './services/quota.js';
+import { createGenerationService } from './services/generation.js';
+import { createBillingService } from './services/billing.js';
 
 const { Pool } = pg;
 
@@ -37,9 +46,7 @@ const CLAUDE_API_KEY      = process.env.CLAUDE_API_KEY;
 const OPENAI_API_KEY      = process.env.OPENAI_API_KEY;
 const DATABASE_URL        = process.env.DATABASE_URL?.trim();
 const DATABASE_PASSWORD   = process.env.DATABASE_PASSWORD?.trim();
-const NODE_ENV            = process.env.NODE_ENV || 'development';
 const PORT                = process.env.PORT || 3000;
-const JWT_SECRET          = process.env.JWT_SECRET || 'roftx_default_secret_please_change_in_prod';
 
 // Determine which AI providers are available
 const hasOpenAI = !!OPENAI_API_KEY;
@@ -57,6 +64,18 @@ if (!AI_PROVIDER) {
 }
 if (!DATABASE_URL && !DATABASE_PASSWORD) {
   console.warn('⚠️  No database credentials found — running in no-DB mode.');
+}
+
+// ─── Production Secret Fail-Safe ──────────────────────────────────────────────
+// Halt the boot when running in production with a missing or default JWT secret.
+// Outside production, warn that the dev fallback secret is in use.
+const secretCheck = validateStartupSecret({ nodeEnv: NODE_ENV, jwtSecret: process.env.JWT_SECRET });
+if (secretCheck.halt) {
+  console.error(`❌ FATAL: ${secretCheck.reason}`);
+  process.exit(1);
+}
+if (NODE_ENV !== 'production' && (!process.env.JWT_SECRET || process.env.JWT_SECRET === DEFAULT_JWT_SECRET)) {
+  console.warn('⚠️  JWT_SECRET unset — using built-in dev fallback. Do NOT use this in production.');
 }
 
 // ─── Express App ──────────────────────────────────────────────────────────────
@@ -84,19 +103,8 @@ app.use(helmet({
 }));
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
-const ALLOWED_ORIGINS = [
-  'https://www.roftx.com',
-  'https://roftx.com',
-  'https://roftx-front02.onrender.com',
-  'http://localhost:8080',
-  'http://127.0.0.1:8080',
-  'http://localhost:5500',
-  'http://localhost:5501',
-  'http://127.0.0.1:5500',
-  'http://127.0.0.1:5501',
-  'http://localhost:3000',
-];
-
+// ALLOWED_ORIGINS is sourced from config.js (the single source of truth) so the
+// deployed frontend/backend origins can change without code edits.
 app.use(cors({
   origin(origin, cb) {
     // Allow requests with no origin (like Render health checks or direct browser visits)
@@ -160,16 +168,106 @@ try {
     max: 10,
   });
   pool.query('SELECT 1')
-    .then(() => { isDatabaseAvailable = true; console.log('✅ Database connected'); })
+    .then(async () => {
+      isDatabaseAvailable = true;
+      console.log('✅ Database connected');
+      // Ensure all platform tables exist (idempotent). Preserve no-DB tolerance:
+      // a schema failure logs a warning and marks the DB unavailable so the
+      // server still serves / and /api/config reporting database: unavailable.
+      try {
+        await ensureSchema(pool);
+        console.log('✅ Schema ensured');
+      } catch (schemaErr) {
+        console.warn('⚠️  Schema ensure failed:', schemaErr.message);
+        isDatabaseAvailable = false;
+      }
+    })
     .catch(err => { console.warn('⚠️  DB unavailable:', err.message); isDatabaseAvailable = false; });
 } catch (err) {
   console.warn('⚠️  DB pool init failed:', err.message);
+}
+
+// ─── Platform Services (instantiated once) ────────────────────────────────────
+// The persistence/quota/billing services are bound to the single pg pool created
+// above. They are created once at startup (not per request). In no-DB mode the
+// pool is null, so these stay null and persistence-dependent routes return a
+// 503-style error (see requireDb). When the pool exists they share its
+// connection; queries simply fail until the DB connects, which is surfaced as a
+// 503 by the availability guard.
+let persistence = null;
+let quotaService = null;
+let billingService = null;
+
+if (pool) {
+  persistence = createPersistence(pool);
+  quotaService = createQuotaService({ persistence });
+  if (BILLING_ENABLED) {
+    // Provider/persistence are injectable; the payment-provider adapter is not
+    // wired yet, so checkout will report "not configured" until one is supplied.
+    billingService = createBillingService({ persistence });
+  }
 }
 
 // ─── Input Sanitisation Helper ────────────────────────────────────────────────
 function sanitise(str, maxLen = 5000) {
   if (typeof str !== 'string') return '';
   return str.slice(0, maxLen).trim();
+}
+
+// ─── DB Availability Guard ────────────────────────────────────────────────────
+// Persistence-dependent routes require a live database. When the DB is
+// unavailable we return a 503-style error rather than throwing, preserving the
+// no-DB tolerance for the health/config endpoints.
+function requireDb(res) {
+  if (!isDatabaseAvailable || !persistence) {
+    res.status(503).json({ error: 'Database unavailable. Please try again later.' });
+    return false;
+  }
+  return true;
+}
+
+// Resolve a user's Plan id from their DB record (defaults to 'free'). Identity is
+// always the token-derived owning userId — never a client-supplied value.
+async function loadUserPlan(userId) {
+  if (!isDatabaseAvailable || !pool || userId == null) return 'free';
+  try {
+    const result = await pool.query('SELECT plan FROM users WHERE id = $1', [userId]);
+    return result.rows.length ? (result.rows[0].plan || 'free') : 'free';
+  } catch (err) {
+    console.error('loadUserPlan failed (defaulting to free):', err.message);
+    return 'free';
+  }
+}
+
+// Owner-scoped route wrapper. Resolves the owning userId STRICTLY from the
+// verified token (never from req.body/req.query), enforces DB availability, and
+// translates thrown `{status}` errors (e.g. persistence NotFoundError → 404) into
+// HTTP responses with generic bodies so another user's data is never disclosed.
+async function withOwner(req, res, handler) {
+  if (!requireDb(res)) return;
+
+  let userId;
+  try {
+    userId = await resolveOwnerUserId(req.user, pool);
+  } catch (err) {
+    console.error('resolveOwnerUserId failed:', err.message);
+    return res.status(500).json({ error: 'Could not resolve account.' });
+  }
+  if (userId == null) {
+    return res.status(404).json({ error: 'Not found.' });
+  }
+
+  try {
+    await handler(userId);
+  } catch (err) {
+    const status = err?.status || 500;
+    if (status === 404) {
+      // Generic not-found — never reveal whether the record exists for another owner.
+      return res.status(404).json({ error: 'Not found.' });
+    }
+    console.error('persistence route error:', err?.message || err);
+    return res.status(status).json({ error: 'Request failed. Please try again.' });
+  }
 }
 
 // ─── AI Provider: OpenAI ──────────────────────────────────────────────────────
@@ -205,8 +303,8 @@ async function callOpenAI(prompt, tier = 'fast') {
 
 // ─── AI Provider: Claude ──────────────────────────────────────────────────────
 const CLAUDE_MODELS = {
-  fast:    'claude-3-5-haiku-20241022',
-  quality: 'claude-3-5-sonnet-20241022',
+  fast:    'claude-haiku-4-5-20251001',
+  quality: 'claude-sonnet-4-5-20250929',
 };
 
 async function callClaude(prompt, tier = 'fast') {
@@ -251,24 +349,6 @@ async function callAI(prompt, tier = 'fast') {
     return await callClaude(prompt, tier);
   }
   throw new Error('No AI provider configured');
-}
-
-// ─── DB: Ensure Users Table ───────────────────────────────────────────────────
-async function ensureUsersTable() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      id           SERIAL PRIMARY KEY,
-      google_id    VARCHAR(255) UNIQUE NOT NULL,
-      email        VARCHAR(255) UNIQUE NOT NULL,
-      full_name    VARCHAR(255),
-      given_name   VARCHAR(255),
-      family_name  VARCHAR(255),
-      picture_url  TEXT,
-      locale       VARCHAR(10),
-      last_login   TIMESTAMP DEFAULT NOW(),
-      created_at   TIMESTAMP DEFAULT NOW()
-    )
-  `);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -331,13 +411,13 @@ app.post('/api/auth/google', authLimiter, async (req, res) => {
 
   if (isDatabaseAvailable && pool) {
     try {
-      await ensureUsersTable();
       const existing = await pool.query('SELECT id FROM users WHERE google_id = $1', [user.google_id]);
       if (existing.rows.length === 0) {
+        // New-user defaults: Free plan and the Free plan's generation allowance.
         const inserted = await pool.query(
-          `INSERT INTO users (google_id,email,full_name,given_name,family_name,picture_url,locale,last_login)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,NOW()) RETURNING id`,
-          [user.google_id, user.email, user.full_name, user.given_name, user.family_name, user.picture_url, user.locale]
+          `INSERT INTO users (google_id,email,full_name,given_name,family_name,picture_url,locale,plan,credits_remaining,last_login)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW()) RETURNING id`,
+          [user.google_id, user.email, user.full_name, user.given_name, user.family_name, user.picture_url, user.locale, 'free', PLANS.free.allowance]
         );
         user.id = inserted.rows[0].id;
         console.log(`✨ New user: ${user.email}`);
@@ -366,21 +446,15 @@ app.post('/api/auth/google', authLimiter, async (req, res) => {
 });
 
 // ─── Authentication Middleware ────────────────────────────────────────────────
-function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  
-  if (!token) return res.status(401).json({ error: 'Access denied. Missing authentication token.' });
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: 'Invalid or expired session. Please log in again.' });
-    req.user = user;
-    next();
-  });
-}
+// `authenticateToken` is imported from ./middleware/auth.js (the single source of
+// truth). Behavior is identical: 401 when the token is missing, 403 when it is
+// invalid or expired, and `req.user = { userId, googleId, email }` on success.
 
 // ─── AI Generation ────────────────────────────────────────────────────────────
-app.post('/api/gemini', aiLimiter, async (req, res) => {
+// Legacy endpoint — now requires a valid Session_Token BEFORE any AI call so no
+// generation happens without authentication (Requirements 3.4/3.5). The handler
+// body is otherwise unchanged.
+app.post('/api/gemini', aiLimiter, authenticateToken, async (req, res) => {
   // Validate request shape
   const body = req.body;
   if (!body || !Array.isArray(body.contents) || !body.contents[0]?.parts?.[0]?.text) {
@@ -413,164 +487,234 @@ app.post('/api/gemini', aiLimiter, async (req, res) => {
   }
 });
 
-// ─── Response Parsers ────────────────────────────────────────────────────────
-function parseTopics(text) {
-  const topics = [];
-  const blocks = text.split(/CONVERSATION\s*\[?\d+\]?:?/i).filter(b => b.trim());
-  for (const block of blocks) {
-    const triggerMatch = block.match(/Primary Trigger:\s*([^\n]+)/i);
-    const premiseMatch = block.match(/Conversation Premise:\s*([\s\S]+?)(?=\nUnique Perspective:|\nWhy This Stops The Scroll:|$)/i);
-    const whyMatch     = block.match(/Why This Stops The Scroll:\s*([\s\S]+?)(?=\nWhy Professionals Will Comment:|$)/i);
-    if (premiseMatch) topics.push({
-      triggerType:  (triggerMatch?.[1] || 'INSIGHT').trim().toUpperCase(),
-      premise:      premiseMatch[1].trim(),
-      whyItWorks:   (whyMatch?.[1] || '').trim(),
-    });
-  }
-  return topics;
-}
+// ─── /api/generate — Elite Prompt Route (Generation_Service) ─────────────────
+// The generation capability (prompt builders + AI dispatcher + tolerant parsers)
+// now lives in ./services/generation.js. We wire it with the local `callAI`
+// dispatcher, a quota adapter, and the persistence service. Authentication runs
+// FIRST via `authenticateToken`; the fixed, security-relevant order of checks
+// (field validation → quota → AI call → parse → persist/log) is enforced inside
+// the service. Response shapes are preserved byte-for-byte.
 
-function parseHooks(text) {
-  const hooks  = [];
-  const types  = ['CONTRARIAN', 'CURIOSITY GAP', 'DATA / SPECIFICITY'];
-  const blocks = text.split(/HOOK\s*\[?\d+\]?\s*[\u2014\u2013:\-]/i).filter(b => b.trim());
-  blocks.forEach((block, i) => {
-    // The block now starts with " [FAMILY NAME]\n[Hook text]"
-    const lines = block.trim().split('\n');
-    let familyName = types[i];
-    let contentStart = 0;
-    
-    // If the first line looks like a family name (all caps or short), extract it
-    if (lines[0] && lines[0].trim().length < 50 && !lines[0].includes('Why this works')) {
-      familyName = lines[0].trim();
-      contentStart = 1;
+// Quota adapter for generation: fail-open when the DB is unavailable or the owner
+// id cannot be resolved, so generation keeps working in no-DB mode (quota is a
+// best-effort guard, never a hard dependency for the AI workflow). When the DB is
+// available the real Quota_Service enforces the per-plan allowance before any AI
+// call (HTTP 429, no AI call, when the allowance is reached).
+const quotaForGeneration = {
+  enforce: async (userId, plan) => {
+    if (!quotaService || !isDatabaseAvailable || userId == null) {
+      return { exceeded: false, ok: true };
     }
-    
-    const cleaned = lines.slice(contentStart).join('\n').trim();
-    const whyMatch = cleaned.match(/Why this works:\s*(.+)/is);
-    const hookText = cleaned.replace(/Why this works:[\s\S]*/i, '').trim();
-    
-    if (hookText) hooks.push({
-      type:        familyName || `HOOK ${i + 1}`,
-      text:        hookText,
-      whyItWorks:  (whyMatch?.[1] || '').trim(),
-    });
-  });
-  return hooks;
-}
-
-function splitMeta(text, marker) {
-  const idx = text.lastIndexOf(marker);
-  if (idx === -1) return { post: text.trim(), meta: '' };
-  return { post: text.slice(0, idx).trim(), meta: text.slice(idx + marker.length).trim() };
-}
-
-// ─── /api/generate — Elite Prompt Route ──────────────────────────────────────
-const TIER_MAP = {
-  topics:     'fast',
-  voice:      'quality',
-  hooks:      'fast',
-  post:       'quality',
-  refine:     'quality',
-  regenerate: 'quality',
+    try {
+      return await quotaService.enforce(userId, plan);
+    } catch (err) {
+      console.error('quota enforce failed (allowing request):', err.message);
+      return { exceeded: false, ok: true };
+    }
+  },
 };
 
+const generationService = createGenerationService({
+  callAI,
+  quota: quotaForGeneration,
+  persistence, // null in no-DB mode; the service guards on this
+});
+
 app.post('/api/generate', aiLimiter, authenticateToken, async (req, res) => {
-  const { type, niche, topic, writingSample, voiceProfile,
-          chosenHook, currentPost, instruction } = req.body;
-
-  if (!type) return res.status(400).json({ error: 'Missing type field.' });
-
-  let prompt;
+  // Resolve the owning userId and Plan strictly from the verified token identity
+  // (never from req.body). The Plan drives the quota allowance; ownership drives
+  // event logging and optional post persistence.
+  let user = req.user || {};
   try {
-    switch (type) {
-      case 'topics':
-        if (!niche) return res.status(400).json({ error: 'niche required.' });
-        prompt = buildTopicSuggestionsPrompt(sanitise(niche, 200));
-        break;
-      case 'voice':
-        if (!writingSample) return res.status(400).json({ error: 'writingSample required.' });
-        prompt = buildVoiceAnalysisPrompt(sanitise(writingSample, 10000));
-        break;
-      case 'hooks':
-        if (!niche || !topic) return res.status(400).json({ error: 'niche and topic required.' });
-        prompt = buildHookGeneratorPrompt(
-          sanitise(niche, 200), sanitise(topic, 500),
-          sanitise(voiceProfile || '', 5000), sanitise(req.body.extra || '', 500)
-        );
-        break;
-      case 'post':
-        if (!niche || !topic || !chosenHook)
-          return res.status(400).json({ error: 'niche, topic, chosenHook required.' });
-        prompt = buildFullPostPrompt(
-          sanitise(niche, 200), sanitise(topic, 500),
-          sanitise(chosenHook, 1000), sanitise(voiceProfile || '', 5000)
-        );
-        break;
-      case 'refine':
-        if (!currentPost || !instruction)
-          return res.status(400).json({ error: 'currentPost and instruction required.' });
-        prompt = buildRefinementPrompt(
-          sanitise(currentPost, 5000), sanitise(instruction, 500),
-          sanitise(voiceProfile || '', 5000)
-        );
-        break;
-      case 'regenerate':
-        if (!currentPost || !niche || !topic)
-          return res.status(400).json({ error: 'currentPost, niche, topic required.' });
-        prompt = buildRegenerationPrompt(
-          sanitise(currentPost, 5000), sanitise(niche, 200),
-          sanitise(topic, 500), sanitise(voiceProfile || '', 5000)
-        );
-        break;
-      default:
-        return res.status(400).json({ error: `Unknown type: ${type}` });
-    }
-  } catch (buildErr) {
-    return res.status(400).json({ error: buildErr.message });
-  }
-
-  const tier = TIER_MAP[type] || 'fast';
-  console.log(`🎯 /api/generate | type:${type} tier:${tier} len:${prompt.length}`);
-
-  try {
-    const raw = await callAI(prompt, tier);
-    if (!raw) throw new Error('Empty AI response');
-
-    switch (type) {
-      case 'topics': {
-        const topics = parseTopics(raw);
-        if (!topics.length) {
-          console.error("RAW AI RESPONSE FOR TOPICS:", raw);
-          throw new Error('Could not parse topics from AI response');
-        }
-        return res.json({ topics });
-      }
-      case 'voice':
-        return res.json({ voiceProfile: raw.trim() });
-      case 'hooks': {
-        const hooks = parseHooks(raw);
-        if (!hooks.length) throw new Error('Could not parse hooks from AI response');
-        return res.json({ hooks });
-      }
-      case 'post':
-        return res.json({ post: raw.trim() });
-      case 'refine': {
-        const { post, meta } = splitMeta(raw, 'CHANGE MADE:');
-        return res.json({ post, changeMade: meta });
-      }
-      case 'regenerate': {
-        const { post, meta } = splitMeta(raw, 'NEW ANGLE USED:');
-        return res.json({ post, newAngle: meta });
-      }
+    if (isDatabaseAvailable && pool) {
+      const userId = await resolveOwnerUserId(req.user, pool);
+      const plan = await loadUserPlan(userId);
+      user = { ...req.user, userId, plan };
     }
   } catch (err) {
-    console.error(`❌ /api/generate [${type}]:`, err.message);
-    const status = err.status || 500;
-    if (status === 429) return res.status(429).json({ error: 'AI rate limit reached. Try again in a moment.' });
+    console.error('generate identity resolution failed (non-fatal):', err.message);
+  }
+
+  const body = req.body || {};
+  console.log(`🎯 /api/generate | type:${body.type}`);
+
+  try {
+    const { status, body: payload } = await generationService.generate(body.type, body, user);
+    return res.status(status).json(payload);
+  } catch (err) {
+    console.error('❌ /api/generate unexpected error:', err?.message || err);
     return res.status(500).json({ error: 'AI generation failed. Please try again.' });
   }
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PERSISTENCE / QUOTA / ACCOUNT ROUTES (owner-scoped, auth required)
+// ═══════════════════════════════════════════════════════════════════════════════
+// Every route below runs `authenticateToken` first and resolves the owning userId
+// via `resolveOwnerUserId(req.user, pool)` inside `withOwner` — the client can
+// never supply or override the owner. Persistence NotFoundError (status 404) is
+// translated to a generic 404 so another user's data is never disclosed.
+
+// ─── Voice Profiles ───────────────────────────────────────────────────────────
+app.post('/api/voice-profiles', authenticateToken, (req, res) =>
+  withOwner(req, res, async (userId) => {
+    const { label, content } = req.body || {};
+    if (!label || !content) {
+      return res.status(400).json({ error: 'label and content required.' });
+    }
+    const result = await persistence.saveVoiceProfile(userId, {
+      label: sanitise(label, 255),
+      content: sanitise(content, 20000),
+    });
+    res.status(201).json(result);
+  })
+);
+
+app.get('/api/voice-profiles', authenticateToken, (req, res) =>
+  withOwner(req, res, async (userId) => {
+    const voiceProfiles = await persistence.listVoiceProfiles(userId);
+    res.json({ voiceProfiles });
+  })
+);
+
+app.delete('/api/voice-profiles/:id', authenticateToken, (req, res) =>
+  withOwner(req, res, async (userId) => {
+    const id = Number.parseInt(req.params.id, 10);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ error: 'Invalid voice profile id.' });
+    }
+    const result = await persistence.deleteVoiceProfile(userId, id);
+    res.json(result);
+  })
+);
+
+// ─── Posts ────────────────────────────────────────────────────────────────────
+app.post('/api/posts', authenticateToken, (req, res) =>
+  withOwner(req, res, async (userId) => {
+    const { id, niche, topic, chosenHook, content, status } = req.body || {};
+    const post = await persistence.upsertPost(userId, {
+      id,
+      niche: niche === undefined ? undefined : sanitise(niche, 200),
+      topic: topic === undefined ? undefined : sanitise(topic, 500),
+      chosenHook: chosenHook === undefined ? undefined : sanitise(chosenHook, 1000),
+      content: content === undefined ? undefined : sanitise(content, 20000),
+      status,
+    });
+    res.json({ post });
+  })
+);
+
+app.post('/api/posts/:id/finalize', authenticateToken, (req, res) =>
+  withOwner(req, res, async (userId) => {
+    const id = Number.parseInt(req.params.id, 10);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ error: 'Invalid post id.' });
+    }
+    const post = await persistence.finalizePost(userId, id);
+    res.json({ post });
+  })
+);
+
+app.get('/api/posts', authenticateToken, (req, res) =>
+  withOwner(req, res, async (userId) => {
+    const { q, status } = req.query;
+    const posts = await persistence.listPosts(userId, {
+      q: typeof q === 'string' ? q : undefined,
+      status: typeof status === 'string' ? status : undefined,
+    });
+    res.json({ posts });
+  })
+);
+
+app.delete('/api/posts/:id', authenticateToken, (req, res) =>
+  withOwner(req, res, async (userId) => {
+    const id = Number.parseInt(req.params.id, 10);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ error: 'Invalid post id.' });
+    }
+    const result = await persistence.deletePost(userId, id);
+    res.json(result);
+  })
+);
+
+// ─── Usage (current-period quota report) ──────────────────────────────────────
+app.get('/api/usage', authenticateToken, (req, res) =>
+  withOwner(req, res, async (userId) => {
+    const plan = await loadUserPlan(userId);
+    const report = await quotaService.report(userId, plan);
+    res.json(report); // { used, allowance, period }
+  })
+);
+
+// ─── Account (export / update / delete) ───────────────────────────────────────
+app.get('/api/account/export', authenticateToken, (req, res) =>
+  withOwner(req, res, async (userId) => {
+    const data = await persistence.exportAccount(userId);
+    res.json(data);
+  })
+);
+
+app.patch('/api/account', authenticateToken, (req, res) =>
+  withOwner(req, res, async (userId) => {
+    const updated = await persistence.updateAccount(userId, req.body || {});
+    if (!updated) {
+      return res.status(404).json({ error: 'Not found.' });
+    }
+    res.json({ account: updated });
+  })
+);
+
+app.delete('/api/account', authenticateToken, (req, res) =>
+  withOwner(req, res, async (userId) => {
+    const result = await persistence.deleteAccount(userId);
+    res.json(result);
+  })
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BILLING ROUTES (registered only when BILLING_ENABLED)
+// ═══════════════════════════════════════════════════════════════════════════════
+if (BILLING_ENABLED && billingService) {
+  // Checkout requires the user's Session_Token; the owning userId is token-derived.
+  app.post('/api/billing/checkout', authenticateToken, (req, res) =>
+    withOwner(req, res, async (userId) => {
+      const session = await billingService.createCheckoutSession({
+        userId,
+        plan: req.body?.plan,
+      });
+      if (!session) {
+        return res.status(503).json({ error: 'Billing is not available.' });
+      }
+      res.json(session); // { url }
+    })
+  );
+
+  // Webhook does NOT require the user JWT — it is authenticated by the payment
+  // provider's signature (verified inside the Billing_Service). On an
+  // unverifiable signature the service returns a 400 and makes NO plan change.
+  //
+  // LIMITATION: express.json() has already parsed the body, so the raw bytes the
+  // provider signed are not preserved here; the default verifier re-serializes
+  // req.body with JSON.stringify. A provider whose signature is computed over the
+  // exact raw payload will require a raw-body parser mounted specifically on this
+  // route before production use. This is intentionally kept simple per task 9.2
+  // and does not affect any other route.
+  app.post('/api/billing/webhook', async (req, res) => {
+    try {
+      const signature =
+        req.headers['x-webhook-signature'] ||
+        req.headers['stripe-signature'] ||
+        req.headers['x-signature'] ||
+        '';
+      const result = await billingService.handleWebhook({ payload: req.body, signature });
+      return res.status(result.status || 200).json(result);
+    } catch (err) {
+      const status = err?.status || 400;
+      console.error('billing webhook error:', err?.message || err);
+      return res.status(status).json({ error: err?.message || 'Webhook could not be processed.' });
+    }
+  });
+}
 
 // ─── 404 & Error Handlers ─────────────────────────────────────────────────────
 app.use((req, res) => {

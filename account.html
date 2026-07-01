@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-5JR48NHN');</script>
+<!-- End Google Tag Manager -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RoftX – Account Settings</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    header { position:sticky;top:0;z-index:50;padding:0 24px;height:64px;display:flex;align-items:center;background:rgba(5,5,8,0.8);backdrop-filter:blur(20px);border-bottom:1px solid var(--color-border); }
+    .header-inner { width:100%;max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between; }
+    .logo { font-size:1.25rem;font-weight:900;background:var(--gradient-primary);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent; }
+    .header-nav { display:flex;align-items:center;gap:8px; }
+    .header-nav a { font-size:.8125rem;color:var(--color-text-secondary);padding:8px 14px;border-radius:8px;transition:all .2s; }
+    .header-nav a:hover { color:var(--color-text);background:rgba(255,255,255,.05); }
+
+    .acc-wrap { max-width:720px;margin:0 auto;padding:48px 24px; }
+    .acc-header { margin-bottom:36px; }
+    .acc-header h1 { font-size:clamp(1.75rem,4vw,2.25rem);font-weight:800;margin-bottom:8px; }
+    .acc-header p { color:var(--color-text-secondary);font-size:.9375rem; }
+
+    .panel { background:rgba(255,255,255,.03);border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:28px;margin-bottom:24px; }
+    .panel h2 { font-size:1.125rem;font-weight:700;margin-bottom:4px; }
+    .panel .panel-sub { color:var(--color-text-secondary);font-size:.875rem;margin-bottom:20px; }
+
+    /* Profile summary */
+    .summary-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
+    @media(max-width:520px){ .summary-grid{grid-template-columns:1fr;} }
+    .summary-item { background:rgba(255,255,255,.02);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:14px 16px; }
+    .summary-label { font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--color-text-muted);margin-bottom:6px; }
+    .summary-value { font-size:.95rem;font-weight:600;color:var(--color-text);word-break:break-word; }
+
+    .plan-pill { display:inline-flex;align-items:center;gap:6px;padding:3px 12px;border-radius:99px;font-size:.8rem;font-weight:700;text-transform:capitalize; }
+    .plan-free { background:rgba(148,163,184,.15);color:#cbd5e1;border:1px solid rgba(148,163,184,.3); }
+    .plan-paid { background:rgba(99,102,241,.18);color:var(--color-primary-light);border:1px solid rgba(99,102,241,.4); }
+
+    /* Usage bar */
+    .usage-row { display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px; }
+    .usage-count { font-size:.95rem;font-weight:700;color:var(--color-text); }
+    .usage-period { font-size:.8rem;color:var(--color-text-muted); }
+    .usage-track { width:100%;height:10px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden; }
+    .usage-fill { height:100%;border-radius:99px;background:var(--gradient-primary);transition:width .4s ease; }
+    .usage-fill.full { background:linear-gradient(135deg,#f97316,#ef4444); }
+
+    .field-group { margin-bottom:18px; }
+    .field-row { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
+    @media(max-width:520px){ .field-row{grid-template-columns:1fr;} }
+
+    .btn-danger { background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.35); }
+    .btn-danger:hover { background:rgba(239,68,68,.2);border-color:rgba(239,68,68,.6);color:#fecaca; }
+
+    .danger-panel { border-color:rgba(239,68,68,.25); }
+    .danger-panel h2 { color:#fca5a5; }
+
+    .inline-msg { font-size:.85rem;min-height:20px;margin-top:8px;transition:all .2s; }
+
+    .action-row { display:flex;gap:12px;flex-wrap:wrap;align-items:center; }
+
+    /* Modal */
+    .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:100;padding:24px; }
+    .modal-box { background:#0f0f18;border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:28px;width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.5); }
+    .modal-title { font-size:1.125rem;font-weight:700;margin-bottom:12px; }
+    .modal-text { font-size:.9rem;color:var(--color-text-secondary);line-height:1.6;margin-bottom:20px; }
+
+    .skeleton { color:var(--color-text-muted); }
+    .fade-in { animation:fadeIn .4s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ─── Responsive / mobile-friendly ─────────────────────────────────────── */
+    /* Never allow horizontal scrolling on small screens. */
+    html, body { max-width:100%;overflow-x:hidden; }
+    .modal-box, .panel, .input-field, .summary-item { max-width:100%; }
+
+    /* Tablet & below */
+    @media (max-width:768px) {
+      header { padding:0 16px;height:60px; }
+      .header-nav { gap:4px; }
+      .header-nav a { padding:8px 10px;font-size:.78rem; }
+      .acc-wrap { padding:32px 20px; }
+      .panel { padding:24px 20px; }
+    }
+
+    /* Large phones */
+    @media (max-width:560px) {
+      header { padding:0 12px; }
+      .header-nav { gap:2px; }
+      .header-nav a { padding:6px 8px;font-size:.72rem; }
+      .logo { font-size:1.1rem; }
+
+      .acc-wrap { padding:28px 16px; }
+      .panel { padding:20px 16px;margin-bottom:18px; }
+
+      /* Stack any multi-column layouts to a single column. */
+      .summary-grid { grid-template-columns:1fr; }
+      .field-row { grid-template-columns:1fr; }
+
+      /* Locale field goes full-width (override inline max-width). */
+      #f-locale { max-width:none; }
+
+      /* Editable form fields & their Save buttons: full-width, easy to tap. */
+      .input-field {
+        font-size:16px; /* avoid iOS zoom-on-focus */
+        min-height:44px;
+        padding:12px 14px;
+      }
+      .action-row { flex-direction:column;align-items:stretch;gap:10px; }
+      .action-row .btn {
+        width:100%;
+        min-height:44px;
+        padding:12px 20px !important;
+      }
+      .action-row .inline-msg { text-align:center; }
+
+      /* Modal fits within the viewport. */
+      .modal-overlay { padding:16px; }
+      .modal-box { max-width:calc(100vw - 32px);padding:22px 18px; }
+      .modal-box > div[style*="flex-end"] { flex-wrap:wrap; }
+      .modal-box .btn {
+        flex:1 1 auto;
+        min-width:0;
+        min-height:44px;
+        padding:12px 16px !important;
+      }
+    }
+
+    /* Small phones */
+    @media (max-width:400px) {
+      header { padding:0 10px;height:56px; }
+      .header-nav a { padding:5px 6px;font-size:.68rem; }
+      .logo { font-size:1rem; }
+
+      .acc-wrap { padding:24px 12px; }
+      .panel { padding:18px 14px; }
+      .acc-header { margin-bottom:28px; }
+
+      .summary-item { padding:12px 14px; }
+      .modal-box { padding:20px 16px; }
+      .modal-box > div[style*="flex-end"] { flex-direction:column;gap:8px; }
+      .modal-box .btn { width:100%; }
+    }
+  </style>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5JR48NHN"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<header>
+  <div class="header-inner">
+    <a href="index.html" class="logo">RoftX</a>
+    <nav class="header-nav">
+      <a href="dashboard.html" class="focusable">Dashboard</a>
+      <a href="generator.html" class="focusable">Generator</a>
+      <a href="#" id="signout-link" class="focusable">Sign Out</a>
+    </nav>
+  </div>
+</header>
+
+<main class="acc-wrap">
+  <div class="acc-header">
+    <h1>Account Settings</h1>
+    <p>Manage your profile, view your plan and usage, export your data, or delete your account.</p>
+  </div>
+
+  <!-- Top-level status (e.g. load failure) -->
+  <div id="page-status" class="inline-msg" style="margin-bottom:8px;"></div>
+
+  <!-- Profile + Plan + Usage -->
+  <section class="panel" id="overview-panel">
+    <h2>Profile</h2>
+    <p class="panel-sub">Your account details and current plan.</p>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <div class="summary-label">Name</div>
+        <div class="summary-value skeleton" id="sum-name">Loading…</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Email</div>
+        <div class="summary-value skeleton" id="sum-email">Loading…</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Current Plan</div>
+        <div class="summary-value" id="sum-plan"><span class="skeleton">Loading…</span></div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Member Since</div>
+        <div class="summary-value skeleton" id="sum-since">Loading…</div>
+      </div>
+    </div>
+
+    <div style="margin-top:24px;">
+      <div class="usage-row">
+        <span class="summary-label" style="margin:0;">This Month's Usage</span>
+        <span class="usage-period" id="usage-period"></span>
+      </div>
+      <div class="usage-row">
+        <span class="usage-count" id="usage-count">—</span>
+      </div>
+      <div class="usage-track"><div class="usage-fill" id="usage-fill" style="width:0%"></div></div>
+    </div>
+  </section>
+
+  <!-- Editable fields -->
+  <section class="panel">
+    <h2>Edit Profile</h2>
+    <p class="panel-sub">Update your display details. Email and plan can't be changed here.</p>
+    <form id="profile-form">
+      <div class="field-row">
+        <div class="field-group">
+          <label class="form-label" for="f-given">First Name</label>
+          <input id="f-given" class="input-field focusable" type="text" autocomplete="given-name" placeholder="Your first name">
+        </div>
+        <div class="field-group">
+          <label class="form-label" for="f-family">Last Name</label>
+          <input id="f-family" class="input-field focusable" type="text" autocomplete="family-name" placeholder="Your last name">
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="form-label" for="f-full">Display Name</label>
+        <input id="f-full" class="input-field focusable" type="text" autocomplete="name" placeholder="How your name appears">
+      </div>
+      <div class="field-group">
+        <label class="form-label" for="f-locale">Locale</label>
+        <input id="f-locale" class="input-field focusable" type="text" placeholder="e.g. en, en-US" style="max-width:220px;">
+      </div>
+      <div class="action-row">
+        <button type="submit" id="save-btn" class="btn btn-primary focusable" style="padding:12px 28px;">Save Changes</button>
+        <span id="save-msg" class="inline-msg"></span>
+      </div>
+    </form>
+  </section>
+
+  <!-- Data export -->
+  <section class="panel">
+    <h2>Your Data</h2>
+    <p class="panel-sub">Download a copy of your profile, voice profiles, and posts as a JSON file.</p>
+    <div class="action-row">
+      <button id="export-btn" class="btn btn-secondary focusable" style="padding:12px 24px;">⬇ Export My Data</button>
+      <span id="export-msg" class="inline-msg"></span>
+    </div>
+  </section>
+
+  <!-- Danger zone -->
+  <section class="panel danger-panel">
+    <h2>Delete Account</h2>
+    <p class="panel-sub">Permanently remove your account and all associated data: profile, voice profiles, posts, and generation history. This cannot be undone.</p>
+    <div class="action-row">
+      <button id="delete-btn" class="btn btn-danger focusable" style="padding:12px 24px;">Delete My Account</button>
+    </div>
+  </section>
+</main>
+
+<!-- Delete confirmation modal -->
+<div id="delete-modal" class="modal-overlay hidden">
+  <div class="modal-box fade-in">
+    <div class="modal-title">Delete your account?</div>
+    <p class="modal-text">This permanently deletes your profile, saved voice profiles, all posts and drafts, and your generation history. This action cannot be undone.</p>
+    <div style="display:flex;justify-content:flex-end;gap:10px;">
+      <button id="delete-cancel" class="btn btn-ghost focusable" style="padding:10px 20px;">Cancel</button>
+      <button id="delete-confirm" class="btn btn-danger focusable" style="padding:10px 24px;">Yes, delete everything</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const $ = id => document.getElementById(id);
+
+  // ─── Enforce Authentication (Req 13.5) ──────────────────────────────────────
+  // Redirect unauthenticated visitors to the sign-in page.
+  const token = localStorage.getItem('roftx_token');
+  if (!token) {
+    window.location.href = 'signup.html';
+    return;
+  }
+
+  // ─── API base selection (matches signup.html / generator.html) ──────────────
+  const PROD_API = 'https://roftx-1.onrender.com';
+  const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:3000' : PROD_API;
+
+  const authHeaders = (extra = {}) => ({ 'Authorization': `Bearer ${token}`, ...extra });
+
+  // A 401/403 means the session is gone/expired → clear token and send to sign-in.
+  function handleAuthFailure() {
+    localStorage.removeItem('roftx_token');
+    window.location.href = 'signup.html';
+  }
+
+  function setMsg(el, text, kind) {
+    el.textContent = text;
+    el.style.color = kind === 'ok' ? '#34d399' : kind === 'err' ? '#f87171' : 'var(--color-text-secondary)';
+  }
+
+  // Decode email from the JWT as a fallback if the export profile is unavailable.
+  function emailFromToken() {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.email || '';
+    } catch { return ''; }
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => (
+      { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]
+    ));
+  }
+
+  function formatDate(value) {
+    if (!value) return '—';
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  // ─── Load profile (via export) + usage in parallel ──────────────────────────
+  let currentProfile = null;
+
+  async function loadAccount() {
+    setMsg($('page-status'), '', null);
+    try {
+      const [exportRes, usageRes] = await Promise.all([
+        fetch(`${API_BASE}/api/account/export`, { headers: authHeaders() }),
+        fetch(`${API_BASE}/api/usage`, { headers: authHeaders() })
+      ]);
+
+      if (exportRes.status === 401 || exportRes.status === 403 ||
+          usageRes.status === 401 || usageRes.status === 403) {
+        handleAuthFailure();
+        return;
+      }
+
+      if (exportRes.ok) {
+        const data = await exportRes.json();
+        currentProfile = data.profile || null;
+        renderProfile(currentProfile);
+      } else {
+        renderProfileFallback();
+      }
+
+      if (usageRes.ok) {
+        renderUsage(await usageRes.json());
+      } else {
+        $('usage-count').textContent = 'Usage unavailable';
+      }
+    } catch (err) {
+      console.error('Failed to load account:', err);
+      setMsg($('page-status'), '⚠ Could not load your account details. Check your connection and refresh.', 'err');
+      renderProfileFallback();
+    }
+  }
+
+  function renderProfile(p) {
+    const name = (p && (p.fullName ||
+      [p.givenName, p.familyName].filter(Boolean).join(' '))) || '—';
+    const email = (p && p.email) || emailFromToken() || '—';
+    const plan = (p && p.plan) || 'free';
+
+    $('sum-name').textContent = name;
+    $('sum-name').classList.remove('skeleton');
+    $('sum-email').textContent = email;
+    $('sum-email').classList.remove('skeleton');
+    $('sum-since').textContent = formatDate(p && p.createdAt);
+    $('sum-since').classList.remove('skeleton');
+
+    const planClass = plan === 'paid' ? 'plan-paid' : 'plan-free';
+    $('sum-plan').innerHTML = `<span class="plan-pill ${planClass}">${escapeHtml(plan)}</span>`;
+
+    // Prefill editable fields.
+    $('f-given').value = (p && p.givenName) || '';
+    $('f-family').value = (p && p.familyName) || '';
+    $('f-full').value = (p && p.fullName) || '';
+    $('f-locale').value = (p && p.locale) || '';
+  }
+
+  // If the export profile is unavailable, still show what we can read from the JWT.
+  function renderProfileFallback() {
+    const email = emailFromToken() || '—';
+    $('sum-name').textContent = '—';
+    $('sum-name').classList.remove('skeleton');
+    $('sum-email').textContent = email;
+    $('sum-email').classList.remove('skeleton');
+    $('sum-since').textContent = '—';
+    $('sum-since').classList.remove('skeleton');
+    $('sum-plan').innerHTML = `<span class="plan-pill plan-free">free</span>`;
+  }
+
+  function renderUsage(u) {
+    const used = Number(u.used) || 0;
+    const allowance = Number(u.allowance) || 0;
+    $('usage-count').textContent = allowance > 0
+      ? `${used} of ${allowance} posts created`
+      : `${used} posts created`;
+    $('usage-period').textContent = u.period ? `Period: ${u.period}` : '';
+    const pct = allowance > 0 ? Math.min(100, Math.round((used / allowance) * 100)) : 0;
+    const fill = $('usage-fill');
+    fill.style.width = `${pct}%`;
+    fill.classList.toggle('full', allowance > 0 && used >= allowance);
+  }
+
+  // ─── Save editable fields (Req 13.2) via PATCH /api/account ──────────────────
+  $('profile-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const saveBtn = $('save-btn');
+    const body = {
+      fullName: $('f-full').value.trim(),
+      givenName: $('f-given').value.trim(),
+      familyName: $('f-family').value.trim(),
+      locale: $('f-locale').value.trim()
+    };
+    saveBtn.disabled = true;
+    setMsg($('save-msg'), 'Saving…', null);
+    try {
+      const res = await fetch(`${API_BASE}/api/account`, {
+        method: 'PATCH',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(body)
+      });
+      if (res.status === 401 || res.status === 403) { handleAuthFailure(); return; }
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        if (data.account) { currentProfile = data.account; renderProfile(currentProfile); }
+        setMsg($('save-msg'), '✓ Changes saved', 'ok');
+        setTimeout(() => setMsg($('save-msg'), '', null), 2500);
+      } else {
+        setMsg($('save-msg'), `❌ ${data.error || 'Could not save changes.'}`, 'err');
+      }
+    } catch (err) {
+      console.error('Save failed:', err);
+      setMsg($('save-msg'), '❌ Could not connect to server.', 'err');
+    } finally {
+      saveBtn.disabled = false;
+    }
+  });
+
+  // ─── Export data (Req 13.3) via GET /api/account/export → JSON download ───────
+  $('export-btn').addEventListener('click', async () => {
+    const exportBtn = $('export-btn');
+    exportBtn.disabled = true;
+    setMsg($('export-msg'), 'Preparing your data…', null);
+    try {
+      const res = await fetch(`${API_BASE}/api/account/export`, { headers: authHeaders() });
+      if (res.status === 401 || res.status === 403) { handleAuthFailure(); return; }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setMsg($('export-msg'), `❌ ${data.error || 'Export failed.'}`, 'err');
+        return;
+      }
+      const data = await res.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const stamp = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `roftx-account-export-${stamp}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setMsg($('export-msg'), '✓ Download started', 'ok');
+      setTimeout(() => setMsg($('export-msg'), '', null), 2500);
+    } catch (err) {
+      console.error('Export failed:', err);
+      setMsg($('export-msg'), '❌ Could not connect to server.', 'err');
+    } finally {
+      exportBtn.disabled = false;
+    }
+  });
+
+  // ─── Delete account (Req 13.4) — confirm first, then DELETE /api/account ──────
+  const deleteModal = $('delete-modal');
+  $('delete-btn').addEventListener('click', () => deleteModal.classList.remove('hidden'));
+  $('delete-cancel').addEventListener('click', () => deleteModal.classList.add('hidden'));
+  deleteModal.addEventListener('click', (e) => {
+    if (e.target === deleteModal) deleteModal.classList.add('hidden');
+  });
+
+  $('delete-confirm').addEventListener('click', async () => {
+    const confirmBtn = $('delete-confirm');
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Deleting…';
+    try {
+      const res = await fetch(`${API_BASE}/api/account`, {
+        method: 'DELETE',
+        headers: authHeaders()
+      });
+      if (res.status === 401 || res.status === 403) { handleAuthFailure(); return; }
+      if (res.ok) {
+        // Clear the session and send the (now deleted) user to sign-in.
+        localStorage.removeItem('roftx_token');
+        window.location.href = 'signup.html';
+      } else {
+        const data = await res.json().catch(() => ({}));
+        deleteModal.classList.add('hidden');
+        setMsg($('page-status'), `❌ ${data.error || 'Could not delete your account. Try again.'}`, 'err');
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Yes, delete everything';
+      }
+    } catch (err) {
+      console.error('Delete failed:', err);
+      deleteModal.classList.add('hidden');
+      setMsg($('page-status'), '❌ Could not connect to server.', 'err');
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Yes, delete everything';
+    }
+  });
+
+  // ─── Sign out ────────────────────────────────────────────────────────────────
+  $('signout-link').addEventListener('click', (e) => {
+    e.preventDefault();
+    localStorage.removeItem('roftx_token');
+    window.location.href = 'signup.html';
+  });
+
+  loadAccount();
+});
+</script>
+</body>
+</html>

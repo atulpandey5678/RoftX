@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-5JR48NHN');</script>
+<!-- End Google Tag Manager -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RoftX – Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── Header ─────────────────────────────────────────────── */
+    header { position:sticky;top:0;z-index:50;padding:0 24px;height:68px;display:flex;align-items:center;background:rgba(5,5,8,0.72);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:1px solid var(--color-border); }
+    .header-inner { width:100%;max-width:1120px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px; }
+    .header-left { display:flex;align-items:center;gap:14px;min-width:0; }
+    .logo { font-size:1.3rem;font-weight:900;letter-spacing:-.02em;background:var(--gradient-primary);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent; }
+
+    /* Back button pill */
+    .back-btn { display:inline-flex;align-items:center;gap:7px;font-size:.85rem;font-weight:600;color:var(--color-text-secondary);background:rgba(255,255,255,.04);border:1px solid var(--color-border);padding:8px 16px 8px 13px;border-radius:var(--radius-full);cursor:pointer;font-family:inherit;transition:all .2s; }
+    .back-btn svg { width:15px;height:15px;transition:transform .2s; }
+    .back-btn:hover { color:var(--color-text);background:rgba(255,255,255,.08);border-color:var(--color-border-hover); }
+    .back-btn:hover svg { transform:translateX(-3px); }
+
+    .header-nav { display:flex;align-items:center;gap:8px; }
+    .header-nav a { font-size:.875rem;color:var(--color-text-secondary);padding:8px 15px;border-radius:var(--radius-full);transition:all .2s;position:relative; }
+    .header-nav a:hover { color:var(--color-text);background:rgba(255,255,255,.05); }
+    .header-nav a.active { color:var(--color-text); }
+    .header-nav a.active::after { content:'';position:absolute;left:15px;right:15px;bottom:1px;height:2px;border-radius:2px;background:var(--gradient-primary); }
+    @media(max-width:560px){ .header-nav a.nav-link{padding:8px 10px;font-size:.82rem;} .back-btn{padding:8px 13px;} }
+
+    /* ── Layout ─────────────────────────────────────────────── */
+    .dash-wrap { max-width:1120px;margin:0 auto;padding:36px 24px 96px;position:relative; }
+    .dash-wrap::before { content:'';position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:min(900px,90%);height:340px;background:var(--gradient-hero);filter:blur(20px);pointer-events:none;z-index:0; }
+    .dash-wrap > * { position:relative;z-index:1; }
+
+    /* ── Hero / greeting ────────────────────────────────────── */
+    .dash-head { display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:28px;animation:fadeInUp .5s ease both; }
+    .greet-eyebrow { font-size:.78rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--color-primary-light);margin-bottom:10px;display:inline-flex;align-items:center;gap:8px; }
+    .greet-eyebrow .dot { width:7px;height:7px;border-radius:50%;background:var(--color-primary-light);box-shadow:0 0 10px var(--color-primary-light);animation:glow-pulse 2.4s ease-in-out infinite; }
+    .dash-head h1 { font-size:clamp(1.7rem,3.4vw,2.4rem);font-weight:800;letter-spacing:-.02em;margin-bottom:8px; }
+    .dash-head h1 .wave { font-size:.85em;display:inline-block;animation:float 3.5s ease-in-out infinite; }
+    .dash-head p { color:var(--color-text-secondary);font-size:.95rem;max-width:480px; }
+    .dash-head .new-post-btn { padding:12px 26px;flex-shrink:0; }
+
+    /* ── Stat cards row ─────────────────────────────────────── */
+    .stat-row { display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px; }
+    @media(max-width:780px){ .stat-row{grid-template-columns:repeat(2,1fr);} }
+    @media(max-width:420px){ .stat-row{grid-template-columns:1fr;} }
+    .stat-tile { position:relative;overflow:hidden;padding:20px 22px;border-radius:var(--radius-lg);background:rgba(255,255,255,.03);border:1px solid var(--color-border);transition:transform .25s,border-color .25s,box-shadow .25s;animation:fadeInUp .5s ease both; }
+    .stat-tile:nth-child(2){animation-delay:.06s;} .stat-tile:nth-child(3){animation-delay:.12s;} .stat-tile:nth-child(4){animation-delay:.18s;}
+    .stat-tile:hover { transform:translateY(-4px);border-color:rgba(99,102,241,.4);box-shadow:0 18px 36px rgba(0,0,0,.35),0 0 28px rgba(99,102,241,.1); }
+    .stat-tile::after { content:'';position:absolute;top:-40%;right:-30%;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.18),transparent 70%);pointer-events:none; }
+    .stat-ico { width:40px;height:40px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:1.15rem;margin-bottom:14px;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.22); }
+    .stat-tile.t-draft .stat-ico { background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.25); }
+    .stat-tile.t-final .stat-ico { background:rgba(52,211,153,.12);border-color:rgba(52,211,153,.25); }
+    .stat-tile.t-usage .stat-ico { background:rgba(236,72,153,.12);border-color:rgba(236,72,153,.25); }
+    .stat-num { font-size:1.9rem;font-weight:900;line-height:1;letter-spacing:-.02em; }
+    .stat-cap { font-size:.8rem;color:var(--color-text-secondary);margin-top:6px;font-weight:500; }
+
+    /* ── Grid ───────────────────────────────────────────────── */
+    .grid { display:grid;grid-template-columns:1fr 332px;gap:24px;align-items:start; }
+    @media(max-width:880px){ .grid{grid-template-columns:1fr;} }
+
+    .panel { background:rgba(255,255,255,.03);border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:26px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:var(--shadow-card);animation:fadeInUp .55s ease both; }
+    .panel-title { font-size:1.0625rem;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:9px; }
+    .panel-title .pt-ico { width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.2); }
+    .panel-sub { font-size:.8125rem;color:var(--color-text-muted);margin-bottom:20px; }
+
+    /* Usage card */
+    .usage-row { display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px; }
+    .usage-big { font-size:2rem;font-weight:900;letter-spacing:-.02em; }
+    .usage-allow { font-size:.875rem;color:var(--color-text-muted);font-weight:500; }
+    .usage-bar { height:10px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden;position:relative;box-shadow:inset 0 1px 2px rgba(0,0,0,.4); }
+    .usage-fill { height:100%;border-radius:99px;background:var(--gradient-primary);width:0;transition:width .8s cubic-bezier(.22,1,.36,1),background .4s ease;position:relative; }
+    .usage-fill::after { content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);background-size:200% 100%;animation:shimmer 2.2s infinite; }
+    .usage-fill.warn { background:linear-gradient(135deg,#fbbf24,#f59e0b); }
+    .usage-fill.danger { background:linear-gradient(135deg,#fb7185,#ef4444); }
+    .usage-period { font-size:.78rem;color:var(--color-text-muted);margin-top:12px;display:flex;align-items:center;gap:6px; }
+
+    /* Controls */
+    .controls { display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px; }
+    .search-wrap { flex:1;min-width:170px;position:relative;display:flex;align-items:center; }
+    .search-wrap svg { position:absolute;left:14px;width:16px;height:16px;color:var(--color-text-muted);pointer-events:none; }
+    .search-wrap .input-field { padding-left:40px; }
+    .status-select { width:auto;min-width:150px;cursor:pointer; }
+
+    /* Post cards */
+    .post-list { display:flex;flex-direction:column;gap:14px; }
+    .post-card { border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:20px 22px;background:rgba(255,255,255,.02);transition:border-color .25s,background .25s,transform .25s,box-shadow .25s;position:relative;overflow:hidden;animation:cardIn .45s ease both; }
+    .post-card::before { content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gradient-primary);opacity:0;transition:opacity .25s; }
+    .post-card:hover { border-color:rgba(99,102,241,.45);background:rgba(255,255,255,.045);transform:translateY(-3px);box-shadow:0 14px 30px rgba(0,0,0,.3); }
+    .post-card:hover::before { opacity:1; }
+    @keyframes cardIn { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
+    .post-card-head { display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px; }
+    .status-pill { font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:4px 11px;border-radius:99px;display:inline-flex;align-items:center;gap:5px; }
+    .status-pill::before { content:'';width:6px;height:6px;border-radius:50%;background:currentColor; }
+    .status-draft { background:rgba(251,191,36,.13);color:#fbbf24;border:1px solid rgba(251,191,36,.3); }
+    .status-final { background:rgba(52,211,153,.13);color:#34d399;border:1px solid rgba(52,211,153,.3); }
+    .post-niche { font-size:.8rem;color:var(--color-primary-light);font-weight:600; }
+    .post-date { font-size:.75rem;color:var(--color-text-muted);margin-left:auto; }
+    .post-topic { font-size:1rem;font-weight:700;margin-bottom:6px;letter-spacing:-.01em; }
+    .post-preview { font-size:.85rem;color:var(--color-text-secondary);line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:16px; }
+    .post-actions { display:flex;gap:8px;flex-wrap:wrap; }
+    .mini-btn { font-size:.8rem;font-weight:500;padding:8px 15px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid var(--color-border);color:var(--color-text-secondary);cursor:pointer;font-family:inherit;transition:all .2s; }
+    .mini-btn:hover { background:rgba(99,102,241,.12);color:var(--color-text);border-color:var(--color-primary);transform:translateY(-1px); }
+    .mini-btn.danger:hover { color:#f87171;border-color:rgba(248,113,113,.5);background:rgba(248,113,113,.1); }
+
+    /* Voice profiles */
+    .vp-list { display:flex;flex-direction:column;gap:10px; }
+    .vp-item { display:flex;align-items:center;gap:11px;padding:13px 15px;border:1px solid var(--color-border);border-radius:var(--radius-md);background:rgba(255,255,255,.02);transition:border-color .2s,background .2s;animation:cardIn .4s ease both; }
+    .vp-item:hover { border-color:rgba(99,102,241,.35);background:rgba(255,255,255,.04); }
+    .vp-item .vp-ico { width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.22);flex-shrink:0; }
+    .vp-label { font-size:.875rem;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+    .vp-del { font-size:.85rem;color:var(--color-text-muted);cursor:pointer;background:none;border:none;padding:6px 8px;border-radius:8px;transition:all .2s;line-height:1; }
+    .vp-del:hover { color:#f87171;background:rgba(248,113,113,.1); }
+
+    /* Empty / loading states */
+    .empty-state { text-align:center;padding:48px 24px;color:var(--color-text-muted);animation:fadeIn .4s ease; }
+    .empty-state .icon { width:60px;height:60px;margin:0 auto 16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.18); }
+    .empty-state p { font-size:.9rem;line-height:1.6;max-width:300px;margin:0 auto; }
+    .empty-state .empty-cta { display:inline-flex;margin-top:18px;padding:10px 22px;font-size:.85rem; }
+    .skeleton { height:118px;border-radius:var(--radius-lg);background:linear-gradient(90deg,rgba(255,255,255,.03),rgba(255,255,255,.07),rgba(255,255,255,.03));background-size:200% 100%;animation:shimmer 1.4s infinite;border:1px solid var(--color-border); }
+
+    /* Sign-in prompt (fallback when redirect cannot occur) */
+    .signin-prompt { max-width:460px;margin:80px auto;text-align:center;padding:48px 36px; }
+    .signin-prompt .si-ico { width:64px;height:64px;margin:0 auto 20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.7rem;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25); }
+    .signin-prompt h2 { font-size:1.4rem;font-weight:800;margin-bottom:12px; }
+    .signin-prompt p { color:var(--color-text-secondary);font-size:.9375rem;margin-bottom:26px;line-height:1.6; }
+
+    .toast { position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:rgba(15,15,24,.92);backdrop-filter:blur(12px);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:13px 24px;font-size:.875rem;font-weight:500;box-shadow:0 14px 40px rgba(0,0,0,.55);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s; }
+    .toast.show { opacity:1;transform:translateX(-50%) translateY(-4px); }
+
+    /* ── Mobile / phone responsiveness (builds on the rules above) ─────────── */
+    @media (max-width:768px){
+      header { padding:0 16px;height:62px; }
+      .header-inner { gap:10px; }
+      .header-left { gap:10px; }
+      .dash-wrap { padding:28px 16px 80px; }
+
+      /* Hero stacks: heading block on top, full-width New Post button below */
+      .dash-head { flex-direction:column;align-items:stretch;gap:16px; }
+      .dash-head .new-post-btn { width:100%;justify-content:center;text-align:center; }
+
+      /* Search + status filter controls go full width, stacked */
+      .controls { flex-direction:column;gap:12px; }
+      .search-wrap { width:100%;min-width:0; }
+      .status-select { width:100%;min-width:0; }
+
+      .panel { padding:22px 18px; }
+
+      /* 16px inputs prevent iOS auto-zoom on focus */
+      .input-field, .search-wrap .input-field, .status-select { font-size:16px; }
+    }
+
+    @media (max-width:560px){
+      header { padding:0 12px; }
+      .logo { font-size:1.15rem; }
+      .header-left { gap:8px; }
+      .back-btn { padding:8px 12px 8px 11px;font-size:.8rem; }
+      .header-nav { gap:4px; }
+      /* Compact the "+ New Post" pill so the nav never gets cut off */
+      .header-nav a.btn-primary { padding:8px 12px !important;font-size:.8rem !important; }
+
+      /* Post card head wraps gracefully; date is free to drop to its own line */
+      .post-date { margin-left:0; }
+
+      /* Action buttons fill the row, wrap, and keep 44px tap targets */
+      .post-actions { gap:8px; }
+      .mini-btn { min-height:44px;display:inline-flex;align-items:center;justify-content:center;flex:1 1 auto; }
+
+      /* Keep the toast inside the viewport width */
+      .toast { left:12px;right:12px;max-width:none;text-align:center;transform:translateY(8px); }
+      .toast.show { transform:translateY(-4px); }
+    }
+
+    @media (max-width:400px){
+      header { padding:0 10px;height:58px; }
+      .header-left { gap:6px; }
+      .back-btn { gap:5px;padding:7px 10px 7px 9px; }
+      .back-btn svg { width:14px;height:14px; }
+      .logo { font-size:1.05rem; }
+      .header-nav { gap:2px; }
+      .header-nav a.nav-link { padding:7px 7px;font-size:.8rem; }
+      .header-nav a.btn-primary { padding:8px 10px !important;font-size:.78rem !important; }
+
+      .dash-wrap { padding:24px 12px 72px; }
+      .panel { padding:18px 14px; }
+
+      /* Stack action buttons full width for comfortable tapping on tiny screens */
+      .mini-btn { flex:1 1 100%; }
+
+      /* Prevent long unbroken strings from forcing horizontal scroll */
+      .post-topic, .post-preview { overflow-wrap:anywhere;word-break:break-word; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,*::before,*::after { animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important; }
+    }
+  </style>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5JR48NHN"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<header>
+  <div class="header-inner">
+    <div class="header-left">
+      <button id="back-btn" class="back-btn focusable" type="button" aria-label="Go back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        Back
+      </button>
+      <a href="index.html" class="logo">RoftX</a>
+    </div>
+    <nav class="header-nav">
+      <a href="dashboard.html" class="nav-link active focusable"><span class="nav-link-text">Dashboard</span></a>
+      <a href="account.html" class="nav-link focusable"><span class="nav-link-text">Account</span></a>
+      <a href="generator.html" class="btn btn-primary focusable" style="padding:9px 20px;font-size:.85rem;">+ New Post</a>
+    </nav>
+  </div>
+</header>
+
+<!-- Sign-in prompt: shown only when an unauthenticated visitor cannot be redirected (Req 10.9) -->
+<div id="signin-prompt" class="hidden">
+  <div class="signin-prompt panel">
+    <div class="si-ico">🔒</div>
+    <h2>Please sign in</h2>
+    <p>You need to be signed in to view your dashboard. Your posts, drafts, and voice profiles are private to your account.</p>
+    <a href="signup.html" class="btn btn-primary focusable" style="padding:13px 32px;">Go to Sign In →</a>
+  </div>
+</div>
+
+<!-- Main dashboard content (hidden until auth is confirmed) -->
+<main id="dash-content" class="dash-wrap hidden">
+  <div class="dash-head">
+    <div>
+      <div class="greet-eyebrow"><span class="dot"></span> Your workspace</div>
+      <h1>Welcome back <span class="wave">👋</span></h1>
+      <p>Manage your posts, pick up drafts where you left off, and keep your voice profiles handy.</p>
+    </div>
+    <a href="generator.html" class="btn btn-primary focusable new-post-btn">✨ New Post</a>
+  </div>
+
+  <!-- Summary stats (counts wired from existing load/render functions) -->
+  <div class="stat-row">
+    <div class="stat-tile t-total">
+      <div class="stat-ico">📚</div>
+      <div class="stat-num" id="stat-total">—</div>
+      <div class="stat-cap">Total posts</div>
+    </div>
+    <div class="stat-tile t-draft">
+      <div class="stat-ico">✏️</div>
+      <div class="stat-num" id="stat-drafts">—</div>
+      <div class="stat-cap">Drafts</div>
+    </div>
+    <div class="stat-tile t-final">
+      <div class="stat-ico">✓</div>
+      <div class="stat-num" id="stat-finals">—</div>
+      <div class="stat-cap">Final posts</div>
+    </div>
+    <div class="stat-tile t-usage">
+      <div class="stat-ico">⚡</div>
+      <div class="stat-num" id="stat-usage">—</div>
+      <div class="stat-cap">Posts used</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT: Posts -->
+    <section class="panel">
+      <div class="panel-title"><span class="pt-ico">📝</span> Your Posts</div>
+      <div class="panel-sub">Search, resume drafts, copy, or delete.</div>
+
+      <div class="controls">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="search-input" class="input-field focusable" type="search" placeholder="Search niche, topic, or content…" autocomplete="off">
+        </div>
+        <select id="status-filter" class="input-field status-select focusable">
+          <option value="">All statuses</option>
+          <option value="draft">Drafts</option>
+          <option value="final">Final</option>
+        </select>
+      </div>
+
+      <div id="posts-container" class="post-list" aria-live="polite">
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Usage + Voice profiles -->
+    <aside style="display:flex;flex-direction:column;gap:24px;">
+      <div class="panel">
+        <div class="panel-title"><span class="pt-ico">📊</span> Usage</div>
+        <div class="panel-sub">This billing period</div>
+        <div id="usage-body">
+          <div class="usage-row">
+            <span class="usage-big" id="usage-used">—</span>
+            <span class="usage-allow" id="usage-allow"></span>
+          </div>
+          <div class="usage-bar"><div class="usage-fill" id="usage-fill"></div></div>
+          <div class="usage-period" id="usage-period"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><span class="pt-ico">🎙️</span> Voice Profiles</div>
+        <div class="panel-sub">Reusable voice blueprints</div>
+        <div id="vp-container" class="vp-list" aria-live="polite">
+          <div class="skeleton" style="height:54px;"></div>
+          <div class="skeleton" style="height:54px;"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script>
+(function () {
+  // ─── Back button (works regardless of auth state) ──────────────────────────
+  const backBtn = document.getElementById('back-btn');
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      // Use in-app history when we navigated here from within the site;
+      // otherwise fall back to the home page.
+      let sameOriginReferrer = false;
+      try {
+        sameOriginReferrer = !!document.referrer &&
+          new URL(document.referrer).origin === window.location.origin;
+      } catch (e) { sameOriginReferrer = false; }
+      if (window.history.length > 1 && sameOriginReferrer) {
+        window.history.back();
+      } else {
+        window.location.href = 'index.html';
+      }
+    });
+  }
+
+  // ─── Auth enforcement (Req 10.8 / 10.9) ────────────────────────────────────
+  const token = localStorage.getItem('roftx_token');
+  if (!token) {
+    // Attempt to redirect unauthenticated visitors to the sign-in page.
+    try {
+      window.location.href = 'signup.html';
+    } catch (e) {
+      // If the redirect cannot be performed, render no user data and show a
+      // sign-in prompt in place of the dashboard content.
+      showSignInPrompt();
+    }
+    // Fallback: if navigation did not take effect shortly, reveal the prompt
+    // rather than leaving a blank/loading page.
+    setTimeout(() => {
+      if (localStorage.getItem('roftx_token')) return; // signed in meanwhile
+      if (!document.hidden) showSignInPrompt();
+    }, 1200);
+    return;
+  }
+
+  function showSignInPrompt() {
+    document.getElementById('dash-content').classList.add('hidden');
+    document.getElementById('signin-prompt').classList.remove('hidden');
+  }
+
+  // Authenticated → reveal the dashboard.
+  document.getElementById('dash-content').classList.remove('hidden');
+
+  // ─── API helper ─────────────────────────────────────────────────────────────
+  const PROD_API = 'https://roftx-1.onrender.com';
+  const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:3000' : PROD_API;
+
+  async function api(path, options = {}) {
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        ...(options.headers || {})
+      }
+    });
+    // An expired/invalid session should send the user back to sign-in.
+    if (res.status === 401 || res.status === 403) {
+      try { window.location.href = 'signup.html'; } catch (e) { showSignInPrompt(); }
+      throw new Error('Session expired');
+    }
+    let json = {};
+    try { json = await res.json(); } catch (e) { /* tolerate empty bodies */ }
+    if (!res.ok) throw new Error(json.error || `API error ${res.status}`);
+    return json;
+  }
+
+  const $ = id => document.getElementById(id);
+  const postsContainer = $('posts-container');
+  const vpContainer = $('vp-container');
+  const searchInput = $('search-input');
+  const statusFilter = $('status-filter');
+
+  let currentPosts = [];
+
+  // ─── Toast ────────────────────────────────────────────────────────────────
+  let toastTimer;
+  function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  // ─── Helpers ────────────────────────────────────────────────────────────────
+  function escapeHtml(str) {
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function formatDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // ─── Usage (Req 10.6) ────────────────────────────────────────────────────────
+  async function loadUsage() {
+    try {
+      const u = await api('/api/usage');
+      const used = Number(u.used || 0);
+      const allowance = Number(u.allowance || 0);
+      $('usage-used').textContent = used;
+      $('usage-allow').textContent = allowance ? `of ${allowance}` : '';
+      const pct = allowance > 0 ? Math.min(100, Math.round((used / allowance) * 100)) : 0;
+      const fill = $('usage-fill');
+      fill.style.width = pct + '%';
+      // Color shift as usage approaches the allowance.
+      fill.classList.remove('warn', 'danger');
+      if (pct >= 90) fill.classList.add('danger');
+      else if (pct >= 70) fill.classList.add('warn');
+      $('usage-period').textContent = u.period ? `Period: ${u.period}` : '';
+      // Summary stat tile (new id, does not affect existing logic).
+      const usageStat = $('stat-usage');
+      if (usageStat) usageStat.textContent = allowance ? `${used}/${allowance}` : String(used);
+    } catch (err) {
+      console.error('Usage load failed:', err);
+      $('usage-used').textContent = '—';
+      $('usage-period').textContent = 'Could not load usage.';
+    }
+  }
+
+  // ─── Voice profiles (Req 10.5) ────────────────────────────────────────────────
+  async function loadVoiceProfiles() {
+    try {
+      const json = await api('/api/voice-profiles');
+      const profiles = Array.isArray(json.voiceProfiles) ? json.voiceProfiles : [];
+      renderVoiceProfiles(profiles);
+    } catch (err) {
+      console.error('Voice profile load failed:', err);
+      vpContainer.innerHTML = '<div class="empty-state" style="padding:24px;"><p>Could not load voice profiles.</p></div>';
+    }
+  }
+
+  function renderVoiceProfiles(profiles) {
+    if (!profiles.length) {
+      vpContainer.innerHTML = '<div class="empty-state" style="padding:24px;"><div class="icon">🎙️</div><p>No saved voice profiles yet. Save one from the generator to reuse your voice.</p></div>';
+      return;
+    }
+    vpContainer.innerHTML = '';
+    profiles.forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'vp-item';
+      const label = p.label || ('Voice Profile #' + p.id);
+      item.innerHTML = `<span class="vp-ico">🎙️</span><span class="vp-label" title="${escapeHtml(label)}">${escapeHtml(label)}</span>`;
+      const del = document.createElement('button');
+      del.className = 'vp-del focusable';
+      del.title = 'Delete voice profile';
+      del.textContent = '🗑';
+      del.addEventListener('click', () => deleteVoiceProfile(p.id, item, label));
+      item.appendChild(del);
+      vpContainer.appendChild(item);
+    });
+  }
+
+  async function deleteVoiceProfile(id, el, label) {
+    if (!confirm(`Delete voice profile "${label}"? This cannot be undone.`)) return;
+    try {
+      await api(`/api/voice-profiles/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      el.remove();
+      toast('Voice profile deleted');
+      if (!vpContainer.querySelector('.vp-item')) renderVoiceProfiles([]);
+    } catch (err) {
+      console.error('Delete voice profile failed:', err);
+      toast('Could not delete voice profile');
+    }
+  }
+
+  // ─── Posts (Req 10.1–10.4, 12.x) ──────────────────────────────────────────────
+  async function loadPosts() {
+    const q = searchInput.value.trim();
+    const status = statusFilter.value;
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (status) params.set('status', status);
+    const qs = params.toString();
+
+    postsContainer.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
+    try {
+      const json = await api(`/api/posts${qs ? '?' + qs : ''}`);
+      currentPosts = Array.isArray(json.posts) ? json.posts : [];
+      renderPosts(currentPosts, { q, status });
+    } catch (err) {
+      console.error('Posts load failed:', err);
+      postsContainer.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Could not load your posts. Please try again.</p></div>';
+    }
+  }
+
+  function renderPosts(posts, ctx) {
+    // Update summary stat tiles from the loaded data. Only recompute the
+    // library totals on an unfiltered load so the tiles reflect everything,
+    // not just the current search/filter result (new ids; no logic change).
+    if (!ctx || (!ctx.q && !ctx.status)) updateStats(posts);
+
+    if (!posts.length) {
+      // Empty-result indication (Req 12.4 / 10.1).
+      const filtered = ctx && (ctx.q || ctx.status);
+      const msg = filtered
+        ? 'No posts match your search or filter.'
+        : 'No posts yet. Create your first post to see it here.';
+      const icon = filtered ? '🔍' : '📝';
+      const cta = filtered
+        ? ''
+        : '<a href="generator.html" class="btn btn-primary focusable empty-cta">✨ Create your first post</a>';
+      postsContainer.innerHTML = `<div class="empty-state"><div class="icon">${icon}</div><p>${msg}</p>${cta}</div>`;
+      return;
+    }
+    postsContainer.innerHTML = '';
+    posts.forEach((post, i) => {
+      const card = buildPostCard(post);
+      card.style.animationDelay = Math.min(i * 0.05, 0.4) + 's';
+      postsContainer.appendChild(card);
+    });
+  }
+
+  // Update the summary stat tiles. Uses NEW element ids only; never touches the
+  // ids/classes the rest of the dashboard relies on.
+  function updateStats(posts) {
+    const list = Array.isArray(posts) ? posts : [];
+    const drafts = list.filter(p => (p.status || 'draft') === 'draft').length;
+    const finals = list.length - drafts;
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    set('stat-total', list.length);
+    set('stat-drafts', drafts);
+    set('stat-finals', finals);
+  }
+
+  function buildPostCard(post) {
+    const card = document.createElement('div');
+    card.className = 'post-card';
+
+    const isDraft = (post.status || 'draft') === 'draft';
+    const statusClass = isDraft ? 'status-draft' : 'status-final';
+    const statusText = isDraft ? 'Draft' : 'Final';
+    const niche = post.niche || 'Untitled niche';
+    const topic = post.topic || '(No topic)';
+    const date = formatDate(post.updatedAt || post.createdAt);
+    const preview = post.content || '';
+
+    card.innerHTML = `
+      <div class="post-card-head">
+        <span class="status-pill ${statusClass}">${escapeHtml(statusText)}</span>
+        <span class="post-niche">${escapeHtml(niche)}</span>
+        <span class="post-date">${escapeHtml(date)}</span>
+      </div>
+      <div class="post-topic">${escapeHtml(topic)}</div>
+      <div class="post-preview">${escapeHtml(preview)}</div>
+    `;
+
+    const actions = document.createElement('div');
+    actions.className = 'post-actions';
+
+    // Resume / edit in the generator (Req 10.2). Drafts get "Resume", finals get "Open".
+    const resumeBtn = document.createElement('button');
+    resumeBtn.className = 'mini-btn focusable';
+    resumeBtn.textContent = isDraft ? '✏️ Resume' : '✏️ Open in Generator';
+    resumeBtn.addEventListener('click', () => resumeDraft(post));
+    actions.appendChild(resumeBtn);
+
+    // Copy content to clipboard (Req 10.3).
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'mini-btn focusable';
+    copyBtn.textContent = '📋 Copy';
+    copyBtn.addEventListener('click', () => copyPost(post, copyBtn));
+    actions.appendChild(copyBtn);
+
+    // Delete (Req 10.4).
+    const delBtn = document.createElement('button');
+    delBtn.className = 'mini-btn danger focusable';
+    delBtn.textContent = '🗑 Delete';
+    delBtn.addEventListener('click', () => deletePost(post, card));
+    actions.appendChild(delBtn);
+
+    card.appendChild(actions);
+    return card;
+  }
+
+  // Resume a draft/post into the generator. The draft is made identifiable via
+  // both a localStorage payload and a query param so the generator can resume it.
+  function resumeDraft(post) {
+    try {
+      localStorage.setItem('roftx_resume_post', JSON.stringify(post));
+    } catch (e) { /* storage may be unavailable; query param still identifies it */ }
+    const id = encodeURIComponent(post.id == null ? '' : post.id);
+    window.location.href = `generator.html?resume=${id}`;
+  }
+
+  function copyPost(post, btn) {
+    const text = post.content || '';
+    const done = () => {
+      const original = btn.textContent;
+      btn.textContent = '✓ Copied';
+      setTimeout(() => { btn.textContent = original; }, 1800);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+
+  function fallbackCopy(text, done) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { toast('Copy failed'); }
+    document.body.removeChild(ta);
+  }
+
+  async function deletePost(post, card) {
+    if (!confirm('Delete this post? This cannot be undone.')) return;
+    try {
+      await api(`/api/posts/${encodeURIComponent(post.id)}`, { method: 'DELETE' });
+      // Remove from the displayed list upon success (Req 10.4).
+      card.remove();
+      currentPosts = currentPosts.filter(p => String(p.id) !== String(post.id));
+      toast('Post deleted');
+      if (!currentPosts.length) {
+        renderPosts([], { q: searchInput.value.trim(), status: statusFilter.value });
+      }
+    } catch (err) {
+      console.error('Delete post failed:', err);
+      toast('Could not delete post');
+    }
+  }
+
+  // ─── Search + filter wiring (debounced) ──────────────────────────────────────
+  let searchTimer;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(loadPosts, 300);
+  });
+  statusFilter.addEventListener('change', loadPosts);
+
+  // ─── Init ─────────────────────────────────────────────────────────────────
+  loadPosts();
+  loadVoiceProfiles();
+  loadUsage();
+})();
+</script>
+</body>
+</html>

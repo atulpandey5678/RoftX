@@ -585,3 +585,69 @@ a {
   opacity: 1;
   transform: translateY(0);
 }
+
+/* ==========================================================================
+   Responsive / Mobile Layer (global)
+   Shared, low-risk rules that make every page usable on phones and tablets.
+   Page-specific layouts add their own media queries on top of this baseline.
+   ========================================================================== */
+
+/* Never allow horizontal scrolling from oversized media or wide content. */
+html, body { max-width: 100%; }
+img, video, iframe, canvas, svg, textarea { max-width: 100%; }
+img, video { height: auto; }
+
+/* Honor reduced-motion preferences app-wide. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --- Tablet and below (≤ 768px) --- */
+@media (max-width: 768px) {
+  .section { padding: 64px 20px; }
+  .section-sm { padding: 48px 20px; }
+  .container { padding-left: 4px; padding-right: 4px; }
+
+  .section-subtitle { font-size: 1rem; }
+
+  /* Card paddings ease in a touch */
+  .feature-card,
+  .testimonial-card,
+  .tcard { padding: 22px; }
+  .comparison-col,
+  .compare-col { padding: 24px; }
+
+  /* Footer stacks and centers */
+  .footer-inner { flex-direction: column; text-align: center; gap: 18px; }
+  .footer-links { flex-wrap: wrap; justify-content: center; gap: 16px 20px; }
+
+  /* Steps stack their content comfortably */
+  .step-row { padding: 20px; gap: 16px; }
+}
+
+/* --- Phones (≤ 560px) --- */
+@media (max-width: 560px) {
+  /* Comfortable tap targets for primary controls */
+  .btn { padding: 12px 22px; min-height: 44px; }
+
+  /* Inputs at >=16px font prevent iOS auto-zoom on focus */
+  .input-field { font-size: 16px; }
+
+  .nav-links { gap: 4px; }
+
+  /* Grids that used auto-fit collapse cleanly to a single column */
+  .features-grid,
+  .testimonials-grid { grid-template-columns: 1fr; }
+}
+
+/* --- Small phones (≤ 400px) --- */
+@media (max-width: 400px) {
+  .section { padding: 52px 16px; }
+  .section-sm { padding: 40px 16px; }
+  .btn { font-size: 0.9rem; padding: 11px 18px; }
+}

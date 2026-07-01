@@ -17,8 +17,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="style.css">
   <style>
     header { position:sticky;top:0;z-index:50;padding:0 24px;height:64px;display:flex;align-items:center;background:rgba(5,5,8,0.8);backdrop-filter:blur(20px);border-bottom:1px solid var(--color-border); }
-    .header-inner { width:100%;max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between; }
+    .header-inner { width:100%;max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px; }
+    .header-left { display:flex;align-items:center;gap:14px;min-width:0; }
     .logo { font-size:1.25rem;font-weight:900;background:var(--gradient-primary);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent; }
+    .header-nav { display:flex;align-items:center;gap:8px; }
+    .header-nav a { font-size:.8125rem;color:var(--color-text-secondary);padding:8px 14px;border-radius:var(--radius-full);transition:all .2s;white-space:nowrap; }
+    .header-nav a:hover { color:var(--color-text);background:rgba(255,255,255,.06); }
+    /* Back button */
+    .back-btn { display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border-radius:var(--radius-full);background:rgba(255,255,255,.04);border:1px solid var(--color-border);color:var(--color-text-secondary);font-size:.8125rem;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s; }
+    .back-btn:hover { background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.4);color:var(--color-text);transform:translateX(-2px); }
+    .back-btn svg { width:15px;height:15px; }
+    @media(max-width:560px){ .header-nav a{padding:8px 10px;} .back-btn span{display:none;} .back-btn{padding:8px 11px;} }
 
     .gen-wrap { max-width:780px;margin:0 auto;padding:48px 24px; }
     .gen-header { text-align:center;margin-bottom:48px; }
@@ -85,6 +94,76 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     .fade-in { animation:fadeIn .4s ease; }
     @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ─── Responsive: tablets & small laptops ───────────────────────────── */
+    @media(max-width:768px){
+      header { padding:0 18px; }
+      .gen-wrap { padding:36px 20px; }
+      .gen-header { margin-bottom:36px; }
+      .progress-bar { margin-bottom:36px; }
+      .pb-line { width:60px; }
+      .panel { padding:28px 24px; }
+    }
+
+    /* ─── Responsive: phones ────────────────────────────────────────────── */
+    @media(max-width:560px){
+      header { padding:0 14px;height:58px; }
+      .header-inner { gap:10px; }
+      .header-left { gap:10px; }
+      .logo { font-size:1.125rem; }
+      .header-nav { gap:4px; }
+      .header-nav a { padding:8px 10px;font-size:.78125rem; }
+      .back-btn { padding:8px 11px; }
+      .back-btn span { display:none; }
+
+      .gen-wrap { padding:28px 16px; }
+      .gen-header { margin-bottom:28px; }
+      .gen-header p { font-size:.875rem; }
+      .progress-bar { margin-bottom:32px; }
+      .pb-circle { width:32px;height:32px;font-size:.75rem; }
+      .pb-line { width:36px;margin-bottom:20px; }
+      .pb-label { font-size:.625rem; }
+
+      .panel { padding:20px 16px; }
+
+      /* Single column form (extends the existing 580px stack) */
+      .form-grid { grid-template-columns:1fr; }
+
+      /* Full-width, comfortable tap targets that wrap cleanly */
+      .action-row { flex-direction:column;gap:10px;margin-top:24px; }
+      .action-row .btn { width:100%;min-height:44px;display:inline-flex;align-items:center;justify-content:center; }
+
+      /* Smaller editor on phones, char count stays visible */
+      .post-textarea { min-height:220px;padding:16px; }
+
+      /* Prevent iOS zoom-on-focus by keeping inputs at 16px */
+      .input-field,
+      .post-textarea,
+      #voice-profile-select { font-size:16px; }
+
+      /* Keep dialogs within the viewport */
+      .modal-overlay { padding:16px; }
+      .modal-box { padding:22px;max-width:calc(100vw - 32px); }
+
+      .feedback-float { bottom:16px;right:16px; }
+      .feedback-popup { width:280px;max-width:calc(100vw - 32px); }
+    }
+
+    /* ─── Responsive: very small phones (~360px) ────────────────────────── */
+    @media(max-width:400px){
+      header { padding:0 10px; }
+      .header-nav a { padding:7px 8px;font-size:.75rem; }
+      .back-btn { padding:8px 9px; }
+
+      .gen-wrap { padding:22px 12px; }
+      .panel { padding:16px 12px; }
+
+      .pb-circle { width:28px;height:28px;font-size:.6875rem; }
+      .pb-line { width:22px;margin-bottom:18px; }
+      .pb-label { font-size:.5625rem; }
+
+      .post-textarea { min-height:180px; }
+    }
   </style>
 </head>
 <body>
@@ -94,10 +173,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 <header>
   <div class="header-inner">
-    <a href="index.html" class="logo">RoftX</a>
-    <span style="font-size:.8125rem;color:var(--color-text-muted);">AI Post Generator</span>
+    <div class="header-left">
+      <button type="button" class="back-btn focusable" onclick="goBack()" aria-label="Go back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        <span>Back</span>
+      </button>
+      <a href="index.html" class="logo">RoftX</a>
+    </div>
+    <nav class="header-nav">
+      <a href="dashboard.html" class="focusable">Dashboard</a>
+      <a href="account.html" class="focusable">Account</a>
+    </nav>
   </div>
 </header>
+<script>
+  // Back navigation: return to the previous page when there is in-app history,
+  // otherwise fall back to the dashboard so the button is never a dead end.
+  function goBack() {
+    if (document.referrer && history.length > 1) { history.back(); }
+    else { window.location.href = 'dashboard.html'; }
+  }
+</script>
 
 <main class="gen-wrap">
   <div class="gen-header">
@@ -144,7 +240,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       <div style="margin-top:20px;">
         <label class="form-label" for="style-input">Seed Your Voice <span style="color:var(--color-text-muted);font-weight:400;">(Recommended)</span></label>
-        <div class="input-wrap">
+
+        <!-- Saved Voice Profile selector (populated only when the user has saved profiles) -->
+        <div id="voice-profile-wrap" class="hidden" style="margin-bottom:12px;">
+          <select id="voice-profile-select" class="input-field focusable" style="cursor:pointer;">
+            <option value="">✍️ Paste a new writing sample</option>
+          </select>
+          <p style="font-size:.8rem;color:var(--color-text-muted);margin-top:6px;">Pick a saved voice profile to skip pasting a sample, or paste a new one below.</p>
+        </div>
+
+        <div id="style-input-wrap" class="input-wrap">
           <textarea id="style-input" class="input-field focusable" rows="5" placeholder="Paste a previous LinkedIn post so the AI can match your exact voice and style..." style="padding-bottom:44px;resize:vertical;"></textarea>
           <input type="file" id="style-file" class="hidden" accept=".txt,.docx,.pdf">
           <button class="file-btn focusable" id="upload-btn">⬆ Upload File</button>
@@ -244,6 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const feedbackToggle=$('feedback-toggle'),feedbackPopup=$('feedback-popup');
   const feedbackForm=$('feedback-form'),feedbackThanks=$('feedback-thanks');
   const uploadBtn=$('upload-btn'),styleFile=$('style-file'),fileStatus=$('file-status');
+  const voiceProfileWrap=$('voice-profile-wrap'),voiceProfileSelect=$('voice-profile-select'),styleInputWrap=$('style-input-wrap');
 
   // Enforce Authentication
   const token = localStorage.getItem('roftx_token');
@@ -255,6 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // State
   let selectedHook='', regenCtx='', loadInterval;
   let voiceProfile=''; // Prompt 2 output — persists across hook/post/refine/regen
+  let savedVoiceProfiles=[]; // user's saved Voice_Profiles fetched from the API
 
   // Niches
   const niches=["SaaS Marketing","AI Startups","Venture Capital","Product Management","UX/UI Design","Web3 & Crypto","E-commerce","B2B Sales","Cybersecurity","Fintech","Healthtech","Edtech","Future of Work","Leadership","Personal Branding","Creator Economy","No-Code","DevOps","Data Science & ML","Bootstrapping","Growth Hacking","Content Marketing","SEO Strategy","Social Media Marketing","Email Marketing","Corporate Finance","Biotechnology","Gaming Industry","AR/VR","Real Estate Tech"];
@@ -319,6 +426,63 @@ document.addEventListener('DOMContentLoaded', () => {
     return json;
   }
 
+  // ─── Saved Voice Profiles ──────────────────────────────────────────────────
+  // Fetch the user's saved profiles and offer them for selection (Req 11.1).
+  // On any failure we leave only the writing-sample step in place (Req 11.3/11.4).
+  async function loadVoiceProfiles(){
+    try{
+      const res=await fetch(`${API_BASE}/api/voice-profiles`,{
+        headers:{ 'Authorization': `Bearer ${token}` }
+      });
+      if(!res.ok)throw new Error(`API error ${res.status}`);
+      const json=await res.json();
+      savedVoiceProfiles=Array.isArray(json.voiceProfiles)?json.voiceProfiles:[];
+    }catch(err){
+      console.error('Could not load voice profiles:',err);
+      savedVoiceProfiles=[];
+    }
+    renderVoiceProfileOptions();
+  }
+
+  function renderVoiceProfileOptions(){
+    // Reset to just the "paste new sample" option.
+    voiceProfileSelect.innerHTML='<option value="">✍️ Paste a new writing sample</option>';
+    if(!savedVoiceProfiles.length){
+      // No saved profiles → keep the writing-sample step exactly as before (Req 11.3).
+      voiceProfileWrap.classList.add('hidden');
+      styleInputWrap.classList.remove('hidden');
+      return;
+    }
+    savedVoiceProfiles.forEach(p=>{
+      const opt=document.createElement('option');
+      opt.value=String(p.id);
+      opt.textContent=`🎙️ ${p.label||('Voice Profile #'+p.id)}`;
+      voiceProfileSelect.appendChild(opt);
+    });
+    voiceProfileWrap.classList.remove('hidden');
+  }
+
+  // Returns the saved profile object the user selected, or null when "paste new" is chosen.
+  function getSelectedProfile(){
+    const id=voiceProfileSelect.value;
+    if(!id)return null;
+    return savedVoiceProfiles.find(p=>String(p.id)===id)||null;
+  }
+
+  // Toggle the writing-sample textarea based on the dropdown selection.
+  voiceProfileSelect.addEventListener('change',()=>{
+    const profile=getSelectedProfile();
+    if(profile && profile.content && profile.content.trim()){
+      styleInputWrap.classList.add('hidden');
+      fileStatus.textContent='';
+    } else {
+      // No usable profile selected → show the writing-sample step (Req 11.3/11.4).
+      styleInputWrap.classList.remove('hidden');
+    }
+  });
+
+  loadVoiceProfiles();
+
   // ─── Prompt 1: Topic Suggestions ───────────────────────────────────────────
   suggestBtn.addEventListener('click',async()=>{
     const niche=nicheInput.value.trim();
@@ -344,10 +508,17 @@ document.addEventListener('DOMContentLoaded', () => {
   generateHooksBtn.addEventListener('click',()=>generateHooks());
   async function generateHooks(extra=''){
     if(!nicheInput.value.trim()||!topicInput.value.trim()){alert('Please fill in Niche and Topic.');return;}
+    // A selected saved profile supplies its content directly as the voiceProfile (Req 11.2);
+    // if none is usable we fall back to the writing-sample step automatically (Req 11.3/11.4).
+    const selectedProfile=getSelectedProfile();
+    const profileContent=(selectedProfile&&selectedProfile.content)?selectedProfile.content.trim():'';
     const sample=styleInput.value.trim();
     try{
-      // Prompt 2 â€” Voice Analysis (only if sample >= 50 chars)
-      if(sample.length>=50){
+      if(profileContent){
+        // Saved Voice Profile selected â€” use its content directly; skip the voice-analysis step.
+        voiceProfile=profileContent;
+      } else if(sample.length>=50){
+        // Prompt 2 â€” Voice Analysis (only if sample >= 50 chars)
         startLoading('Analysing Your Voice...',['Reading your writing style...','Identifying tone & rhythm...','Building your voice profile...']);
         const vd=await callGenerateApi('voice',{writingSample:sample});
         voiceProfile=vd.voiceProfile||'';

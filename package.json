@@ -9,7 +9,7 @@
     "dev:backend": "nodemon roftx_backend/server.js",
     "dev:frontend": "npx http-server . -p 5500 -c-1 --cors",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run"
   },
   "keywords": [
     "linkedin",
@@ -37,6 +37,8 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
-    "nodemon": "^3.0.2"
+    "fast-check": "^3.23.2",
+    "nodemon": "^3.0.2",
+    "vitest": "^2.1.8"
   }
 }

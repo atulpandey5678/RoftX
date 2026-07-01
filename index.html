@@ -97,6 +97,30 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .tcard-role { font-size: 0.8rem; color: var(--color-text-muted); }
 
     @keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+    /* --- Responsive --- */
+    @media(max-width:768px){
+      .hero { min-height:auto; padding:104px 20px 64px; }
+      .hero-video { margin-top:48px; }
+      .step-row { flex-direction:row; }
+    }
+    @media(max-width:560px){
+      header { padding:0 16px; height:60px; }
+      /* Collapse secondary nav links; keep logo + primary CTA reachable */
+      .nav-links .btn-ghost { display:none; }
+      .nav-links { gap:6px; }
+      .hero { padding:92px 18px 56px; }
+      .hero p { font-size:1rem; }
+      .hero-actions { gap:10px; }
+      .hero-actions .btn { width:100%; }
+      .hero-orb-1 { width:320px; height:320px; }
+      .hero-orb-2 { display:none; }
+      .stats-grid { gap:10px; }
+      .footer-inner { flex-direction:column; text-align:center; gap:16px; }
+    }
+    @media(max-width:380px){
+      .stats-grid { grid-template-columns:1fr; }
+    }
   </style>
 </head>
 <body>

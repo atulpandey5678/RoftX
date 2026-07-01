@@ -48,6 +48,80 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .back-link { margin-top:24px;font-size:.8125rem;color:var(--color-text-muted);text-align:center;z-index:1;position:relative; }
     .back-link a { color:var(--color-primary-light); }
     .back-link a:hover { text-decoration:underline; }
+
+    /* ============================================================
+       Responsive / mobile-friendly (breakpoints ~768 / ~560 / ~400)
+       CSS-only — no markup or JS behavior changes.
+       ============================================================ */
+
+    /* Guard against any horizontal overflow on this page */
+    html, body { max-width:100%; overflow-x:hidden; }
+    .card { box-sizing:border-box; margin-left:auto; margin-right:auto; }
+    /* Keep the Google button container centered and never wider than the card */
+    .g_id_signin { width:100%; max-width:100%; }
+
+    /* --- Tablet and below (≤ 768px) --- */
+    @media (max-width:768px){
+      body { padding:20px 16px; }
+      .tagline { margin-bottom:28px; }
+      .card { padding:32px 28px; }
+      /* Shrink decorative orbs so they don't dominate small screens */
+      .bg-orb-1 { width:360px; height:360px; top:-160px; }
+      .bg-orb-2 { width:220px; height:220px; bottom:-80px; }
+    }
+
+    /* --- Phones (≤ 560px) --- */
+    @media (max-width:560px){
+      body { padding:16px 14px; }
+      .logo { font-size:1.5rem; }
+      .tagline { font-size:.85rem; margin-bottom:24px; }
+      .card {
+        padding:28px 22px;
+        max-width:calc(100vw - 32px);
+      }
+      .card-title { font-size:1.25rem; }
+      .card-sub { font-size:.85rem; margin-bottom:24px; }
+      .divider { margin:20px 0; }
+      .benefits { margin-top:24px; padding-top:20px; }
+      .benefit-item { font-size:.825rem; }
+
+      /* CTAs full-width and comfortable to tap (≥44px) */
+      #dev-bypass .btn {
+        width:100%;
+        min-height:44px;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+      }
+
+      /* iOS: prevent input zoom (no inputs today, but future-proof) */
+      input, textarea, select { font-size:16px; }
+    }
+
+    /* --- Small phones (≤ 400px) --- */
+    @media (max-width:400px){
+      body { padding:14px 12px; }
+      .logo { font-size:1.375rem; }
+      .tagline { font-size:.8rem; }
+      .card {
+        padding:24px 16px;
+        max-width:calc(100vw - 24px);
+      }
+      .card-title { font-size:1.15rem; }
+      .card-sub { font-size:.825rem; }
+      .bg-orb-1 { width:280px; height:280px; top:-130px; }
+      .bg-orb-2 { width:170px; height:170px; }
+      /* The Google button renders at a fixed pixel width (340). Gently
+         scale its container so it fits inside the card without clipping
+         or causing horizontal scroll, while preserving GSI's own rendering. */
+      .g_id_signin { transform:scale(.93); transform-origin:center top; }
+    }
+
+    /* --- Very small phones (≤ 360px) --- */
+    @media (max-width:360px){
+      .card { padding:22px 14px; }
+      .g_id_signin { transform:scale(.85); transform-origin:center top; }
+    }
   </style>
 </head>
 <body>
