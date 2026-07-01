@@ -37,8 +37,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     /* Progress */
     .progress-bar { display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:48px; }
     .pb-step { display:flex;flex-direction:column;align-items:center;gap:6px;position:relative; }
-    .pb-circle { width:36px;height:36px;border-radius:50%;border:2px solid var(--color-border);display:flex;align-items:center;justify-content:center;font-size:.8125rem;font-weight:700;color:var(--color-text-muted);background:var(--color-bg);z-index:1;transition:all .3s; }
-    .pb-circle.active { border-color:var(--color-primary);background:var(--color-primary);color:#fff;box-shadow:0 0 14px rgba(99,102,241,.5); }
+    .pb-circle { width:36px;height:36px;border-radius:50%;border:2px solid var(--color-border);display:flex;align-items:center;justify-content:center;font-size:.8125rem;font-weight:700;color:var(--color-text-muted);background:var(--color-bg);z-index:1;transition:all .18s; }
+    .pb-circle.active { border-color:var(--color-primary);background:var(--color-primary);color:#fff;box-shadow:0 0 12px rgba(99,102,241,.4); }
     .pb-circle.done { border-color:var(--color-primary);background:rgba(99,102,241,.15);color:var(--color-primary-light); }
     .pb-label { font-size:.6875rem;font-weight:500;color:var(--color-text-muted);white-space:nowrap; }
     .pb-label.active { color:var(--color-primary-light); }
@@ -56,7 +56,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .file-btn:hover { background:rgba(255,255,255,.12);color:var(--color-text); }
 
     .topic-suggestions { margin-top:10px;display:flex;flex-direction:column;gap:8px; }
-    .topic-btn { text-align:left;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--color-border);cursor:pointer;transition:all .2s;font-family:inherit;color:var(--color-text); }
+    .topic-btn { text-align:left;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--color-border);cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit;color:var(--color-text); }
     .topic-btn:hover { background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.4); }
     .topic-btn strong { display:block;font-size:.875rem;color:var(--color-text); }
     .topic-btn span { font-size:.8rem;color:var(--color-text-muted); }
@@ -69,7 +69,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     /* Hooks */
     .hooks-grid { display:grid;grid-template-columns:1fr;gap:12px;margin:24px 0; }
-    .hook-card { padding:20px 22px;border-radius:var(--radius-md);background:rgba(255,255,255,.03);border:2px solid var(--color-border);cursor:pointer;transition:all .2s;font-family:inherit;font-size:.9375rem;color:var(--color-text);text-align:left;line-height:1.55; }
+    .hook-card { padding:20px 22px;border-radius:var(--radius-md);background:rgba(255,255,255,.03);border:2px solid var(--color-border);cursor:pointer;transition:border-color .15s,background .15s,transform .15s;font-family:inherit;font-size:.9375rem;color:var(--color-text);text-align:left;line-height:1.55; }
     .hook-card:hover { border-color:rgba(99,102,241,.5);background:rgba(99,102,241,.07);transform:translateY(-2px); }
     .hook-card.selected { border-color:var(--color-primary);background:rgba(99,102,241,.12);box-shadow:0 0 0 1px var(--color-primary),0 0 20px rgba(99,102,241,.15); }
     .hook-num { font-size:.75rem;font-weight:700;color:var(--color-primary-light);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px; }
@@ -92,8 +92,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .feedback-float { position:fixed;bottom:24px;right:24px;z-index:90; }
     .feedback-popup { position:absolute;bottom:calc(100% + 10px);right:0;width:280px;background:#0f0f18;border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:20px;box-shadow:0 16px 40px rgba(0,0,0,.5); }
 
-    .fade-in { animation:fadeIn .4s ease; }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    .fade-in { animation:fadeIn .18s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
 
     /* ─── Responsive: tablets & small laptops ───────────────────────────── */
     @media(max-width:768px){

@@ -37,9 +37,9 @@
   --radius-xl: 28px;
   --radius-full: 9999px;
 
-  --transition-fast: 150ms ease;
-  --transition-base: 250ms ease;
-  --transition-slow: 400ms ease;
+  --transition-fast: 100ms ease;
+  --transition-base: 180ms ease;
+  --transition-slow: 300ms ease;
 }
 
 /* --- Reset & Base --- */

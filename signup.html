@@ -12,13 +12,20 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RoftX – Sign In</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!--
+    GSI script: loaded with highest priority possible.
+    - No `async`/`defer` so it blocks the parser and is available immediately.
+    - Placed BEFORE style.css so the browser fetches it in parallel with styles.
+    - `onload` callback calls initGoogleAuth right when the script is ready,
+      eliminating the window.onload bottleneck and the 1000ms fallback delay.
+  -->
+  <script src="https://accounts.google.com/gsi/client" onload="initGoogleAuth()"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <style>
-    body { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; background:var(--color-bg); position:relative; overflow:hidden; }
-    .bg-orb { position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none; }
+    body { min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:var(--color-bg);position:relative;overflow:hidden; }
+    .bg-orb { position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none; }
     .bg-orb-1 { width:500px;height:500px;top:-200px;left:50%;transform:translateX(-50%);background:rgba(99,102,241,.15);animation:glow-pulse 5s ease-in-out infinite; }
     .bg-orb-2 { width:300px;height:300px;bottom:-100px;right:-50px;background:rgba(167,139,250,.1);animation:glow-pulse 6s ease-in-out infinite 1s; }
     @keyframes glow-pulse{0%,100%{opacity:.5}50%{opacity:1}}
@@ -26,11 +33,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .logo { font-size:1.75rem;font-weight:900;background:var(--gradient-primary);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;display:block;text-align:center; }
     .tagline { font-size:.9rem;color:var(--color-text-muted);text-align:center;margin-bottom:36px; }
 
-    .card { width:100%;max-width:420px;background:rgba(255,255,255,.03);border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:40px 36px;backdrop-filter:blur(20px);position:relative;z-index:1;animation:fadeInUp .5s ease; }
-    @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    /* Card enters in 200ms — feels instant vs the previous 500ms */
+    .card { width:100%;max-width:420px;background:rgba(255,255,255,.03);border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:40px 36px;backdrop-filter:blur(20px);position:relative;z-index:1;animation:fadeInUp .2s ease both; }
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 
     .card-title { font-size:1.375rem;font-weight:800;text-align:center;margin-bottom:6px; }
     .card-sub { font-size:.9rem;color:var(--color-text-secondary);text-align:center;margin-bottom:28px; }
+
+    /* Placeholder shown while the Google button loads */
+    .gsi-placeholder { height:44px;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid var(--color-border);display:flex;align-items:center;justify-content:center;gap:10px;color:var(--color-text-secondary);font-size:.875rem; }
+    .gsi-placeholder.hidden { display:none; }
 
     .divider { display:flex;align-items:center;gap:12px;margin:24px 0; }
     .divider-line { flex:1;height:1px;background:var(--color-border); }
@@ -40,87 +52,53 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .benefit-item { display:flex;align-items:center;gap:10px;font-size:.875rem;color:var(--color-text-secondary); }
     .benefit-icon { color:#34d399;font-size:.875rem;flex-shrink:0; }
 
-    #status-msg { text-align:center;font-size:.875rem;color:var(--color-text-secondary);min-height:20px;margin-top:8px;transition:all .2s; }
+    #status-msg { text-align:center;font-size:.875rem;color:var(--color-text-secondary);min-height:20px;margin-top:8px;transition:color .15s; }
 
-    /* Google button override — center it */
-    .g_id_signin { display:flex; justify-content:center; }
+    .g_id_signin { display:flex;justify-content:center; }
 
     .back-link { margin-top:24px;font-size:.8125rem;color:var(--color-text-muted);text-align:center;z-index:1;position:relative; }
     .back-link a { color:var(--color-primary-light); }
     .back-link a:hover { text-decoration:underline; }
 
-    /* ============================================================
-       Responsive / mobile-friendly (breakpoints ~768 / ~560 / ~400)
-       CSS-only — no markup or JS behavior changes.
-       ============================================================ */
+    /* ── Responsive ── */
+    html, body { max-width:100%;overflow-x:hidden; }
+    .card { box-sizing:border-box;margin-left:auto;margin-right:auto; }
+    .g_id_signin { width:100%;max-width:100%; }
 
-    /* Guard against any horizontal overflow on this page */
-    html, body { max-width:100%; overflow-x:hidden; }
-    .card { box-sizing:border-box; margin-left:auto; margin-right:auto; }
-    /* Keep the Google button container centered and never wider than the card */
-    .g_id_signin { width:100%; max-width:100%; }
-
-    /* --- Tablet and below (≤ 768px) --- */
-    @media (max-width:768px){
+    @media(max-width:768px){
       body { padding:20px 16px; }
       .tagline { margin-bottom:28px; }
       .card { padding:32px 28px; }
-      /* Shrink decorative orbs so they don't dominate small screens */
-      .bg-orb-1 { width:360px; height:360px; top:-160px; }
-      .bg-orb-2 { width:220px; height:220px; bottom:-80px; }
+      .bg-orb-1 { width:360px;height:360px;top:-160px; }
+      .bg-orb-2 { width:220px;height:220px;bottom:-80px; }
     }
-
-    /* --- Phones (≤ 560px) --- */
-    @media (max-width:560px){
+    @media(max-width:560px){
       body { padding:16px 14px; }
       .logo { font-size:1.5rem; }
-      .tagline { font-size:.85rem; margin-bottom:24px; }
-      .card {
-        padding:28px 22px;
-        max-width:calc(100vw - 32px);
-      }
+      .tagline { font-size:.85rem;margin-bottom:24px; }
+      .card { padding:28px 22px;max-width:calc(100vw - 32px); }
       .card-title { font-size:1.25rem; }
-      .card-sub { font-size:.85rem; margin-bottom:24px; }
+      .card-sub { font-size:.85rem;margin-bottom:24px; }
       .divider { margin:20px 0; }
-      .benefits { margin-top:24px; padding-top:20px; }
+      .benefits { margin-top:24px;padding-top:20px; }
       .benefit-item { font-size:.825rem; }
-
-      /* CTAs full-width and comfortable to tap (≥44px) */
-      #dev-bypass .btn {
-        width:100%;
-        min-height:44px;
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-      }
-
-      /* iOS: prevent input zoom (no inputs today, but future-proof) */
+      #dev-bypass .btn { width:100%;min-height:44px;display:inline-flex;align-items:center;justify-content:center; }
       input, textarea, select { font-size:16px; }
     }
-
-    /* --- Small phones (≤ 400px) --- */
-    @media (max-width:400px){
+    @media(max-width:400px){
       body { padding:14px 12px; }
       .logo { font-size:1.375rem; }
       .tagline { font-size:.8rem; }
-      .card {
-        padding:24px 16px;
-        max-width:calc(100vw - 24px);
-      }
+      .card { padding:24px 16px;max-width:calc(100vw - 24px); }
       .card-title { font-size:1.15rem; }
       .card-sub { font-size:.825rem; }
-      .bg-orb-1 { width:280px; height:280px; top:-130px; }
-      .bg-orb-2 { width:170px; height:170px; }
-      /* The Google button renders at a fixed pixel width (340). Gently
-         scale its container so it fits inside the card without clipping
-         or causing horizontal scroll, while preserving GSI's own rendering. */
-      .g_id_signin { transform:scale(.93); transform-origin:center top; }
+      .bg-orb-1 { width:280px;height:280px;top:-130px; }
+      .bg-orb-2 { width:170px;height:170px; }
+      .g_id_signin { transform:scale(.93);transform-origin:center top; }
     }
-
-    /* --- Very small phones (≤ 360px) --- */
-    @media (max-width:360px){
+    @media(max-width:360px){
       .card { padding:22px 14px; }
-      .g_id_signin { transform:scale(.85); transform-origin:center top; }
+      .g_id_signin { transform:scale(.85);transform-origin:center top; }
     }
   </style>
 </head>
@@ -129,6 +107,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5JR48NHN"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Inline the Google Client ID: avoids an extra fetch('/api/config') round-trip
+       on every sign-in page load. Falls back to the dynamic fetch if blank. -->
+  <script>window._GCID = '';</script>
+
   <div class="bg-orb bg-orb-1"></div>
   <div class="bg-orb bg-orb-2"></div>
 
@@ -139,8 +122,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <h1 class="card-title">Welcome Back</h1>
     <p class="card-sub" id="status-msg">Sign in to access the AI generator.</p>
 
+    <!-- Shown instantly while the GSI iframe loads -->
+    <div class="gsi-placeholder" id="gsi-placeholder">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity=".3"/><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="animation:spin .7s linear infinite;transform-origin:center"/></svg>
+      Loading sign-in…
+    </div>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
     <!-- Google Sign-In container -->
-    <div class="g_id_signin"
+    <div class="g_id_signin hidden" id="gsi-btn"
          data-type="standard"
          data-shape="rectangular"
          data-theme="filled_black"
@@ -160,7 +150,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="benefit-item"><span class="benefit-icon">✓</span> AI-generated posts in 60 seconds</div>
       <div class="benefit-item"><span class="benefit-icon">✓</span> Voice-matched content every time</div>
       <div class="benefit-item"><span class="benefit-icon">✓</span> Trending topic suggestions for your niche</div>
-
     </div>
   </div>
 
@@ -179,39 +168,51 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
       ? 'http://localhost:3000' : PROD_API;
 
-    // Fetch Google Client ID from backend, then initialise GSI programmatically
-    async function initGoogleAuth() {
-      try {
-        const cfg = await fetch(`${API_BASE}/api/config`).then(r => r.json());
-        if (cfg.googleClientId && window.google && window.google.accounts) {
-          google.accounts.id.initialize({
-            client_id: cfg.googleClientId,
-            callback: handleCredentialResponse,
-            auto_prompt: false
-          });
-          google.accounts.id.renderButton(document.querySelector('.g_id_signin'), {
-            theme: 'filled_black',
-            size: 'large',
-            text: 'continue_with',
-            width: 340
-          });
-        }
-      } catch (e) {
-        console.warn('Config fetch failed:', e);
-      }
+    // Show the real button + hide the placeholder once GSI is ready.
+    function showGsiButton() {
+      document.getElementById('gsi-placeholder').classList.add('hidden');
+      document.getElementById('gsi-btn').classList.remove('hidden');
     }
 
-    // Wait for the GSI script to load if it hasn't already
-    window.onload = () => {
-      if (window.google) initGoogleAuth();
-      else setTimeout(initGoogleAuth, 1000); // fallback wait
-      
-      // Dev bypass — show if Google button iframe never renders
-      setTimeout(() => {
-        const iframe = document.querySelector('.g_id_signin iframe');
-        if (!iframe) document.getElementById('dev-bypass').style.display = 'block';
-      }, 2500);
-    };
+    // Called immediately by the GSI script's onload — no window.onload delay.
+    // Uses the inlined client ID first (zero extra fetch); falls back to /api/config.
+    async function initGoogleAuth() {
+      let clientId = window._GCID || '';
+
+      if (!clientId) {
+        // Fallback: fetch from backend (only hits on first load or if inlining is disabled)
+        try {
+          const cfg = await fetch(`${API_BASE}/api/config`, { cache: 'force-cache' }).then(r => r.json());
+          clientId = cfg.googleClientId || '';
+        } catch (e) {
+          console.warn('Config fetch failed:', e);
+        }
+      }
+
+      if (clientId && window.google && window.google.accounts) {
+        google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleCredentialResponse,
+          auto_prompt: false
+        });
+        google.accounts.id.renderButton(document.getElementById('gsi-btn'), {
+          theme: 'filled_black',
+          size: 'large',
+          text: 'continue_with',
+          width: 340
+        });
+        showGsiButton();
+      } else {
+        // GSI or clientId unavailable — show dev bypass if no button appears
+        setTimeout(() => {
+          const iframe = document.querySelector('.g_id_signin iframe');
+          if (!iframe) {
+            showGsiButton(); // hide spinner at least
+            document.getElementById('dev-bypass').style.display = 'block';
+          }
+        }, 1500);
+      }
+    }
 
     async function handleCredentialResponse(response) {
       const msg = document.getElementById('status-msg');
@@ -225,10 +226,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          localStorage.setItem('roftx_token', data.token); // Save JWT for API calls
+          localStorage.setItem('roftx_token', data.token);
           msg.textContent = '✓ Signed in! Redirecting…';
           msg.style.color = '#34d399';
-          setTimeout(() => window.location.href = 'generator.html', 800);
+          setTimeout(() => window.location.href = 'generator.html', 600);
         } else {
           msg.textContent = `❌ ${data.error || 'Authentication failed.'}`;
           msg.style.color = '#f87171';
