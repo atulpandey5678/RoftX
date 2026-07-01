@@ -13,13 +13,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <title>RoftX – Sign In</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <!--
-    GSI script: loaded with highest priority possible.
-    - No `async`/`defer` so it blocks the parser and is available immediately.
-    - Placed BEFORE style.css so the browser fetches it in parallel with styles.
-    - `onload` callback calls initGoogleAuth right when the script is ready,
-      eliminating the window.onload bottleneck and the 1000ms fallback delay.
+    GSI script: async + defer so it downloads in parallel without blocking
+    the HTML parser. The page renders immediately; initGoogleAuth() is called
+    by a lightweight poller that fires as soon as window.google is ready
+    (typically < 200ms after the script executes), bypassing window.onload.
   -->
-  <script src="https://accounts.google.com/gsi/client" onload="initGoogleAuth()"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -108,9 +107,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
-  <!-- Inline the Google Client ID: avoids an extra fetch('/api/config') round-trip
-       on every sign-in page load. Falls back to the dynamic fetch if blank. -->
-  <script>window._GCID = '';</script>
+  <!-- Google Client ID: public OAuth identifier, safe to inline.
+       Inlining eliminates the fetch('/api/config') round-trip on every page load.
+       Restricted to authorized domains in Google Cloud Console. -->
+  <script>window._GCID = '225100810623-7v2md7r8r2os44of016c6a3ebk0gseom.apps.googleusercontent.com';</script>
 
   <div class="bg-orb bg-orb-1"></div>
   <div class="bg-orb bg-orb-2"></div>
@@ -168,51 +168,49 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
       ? 'http://localhost:3000' : PROD_API;
 
-    // Show the real button + hide the placeholder once GSI is ready.
     function showGsiButton() {
       document.getElementById('gsi-placeholder').classList.add('hidden');
       document.getElementById('gsi-btn').classList.remove('hidden');
     }
 
-    // Called immediately by the GSI script's onload — no window.onload delay.
-    // Uses the inlined client ID first (zero extra fetch); falls back to /api/config.
-    async function initGoogleAuth() {
-      let clientId = window._GCID || '';
+    // Polls for window.google every 50ms (max 3s) instead of waiting for
+    // window.onload, which fires only after ALL assets finish loading.
+    // The client ID is inlined above — no fetch('/api/config') needed at all.
+    function initGoogleAuth() {
+      const clientId = window._GCID;
+      if (!clientId) return; // safety: nothing to do without a client ID
 
-      if (!clientId) {
-        // Fallback: fetch from backend (only hits on first load or if inlining is disabled)
-        try {
-          const cfg = await fetch(`${API_BASE}/api/config`, { cache: 'force-cache' }).then(r => r.json());
-          clientId = cfg.googleClientId || '';
-        } catch (e) {
-          console.warn('Config fetch failed:', e);
-        }
-      }
-
-      if (clientId && window.google && window.google.accounts) {
-        google.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleCredentialResponse,
-          auto_prompt: false
-        });
+      if (window.google && window.google.accounts) {
+        // GSI script already loaded — render immediately
+        google.accounts.id.initialize({ client_id: clientId, callback: handleCredentialResponse, auto_prompt: false });
         google.accounts.id.renderButton(document.getElementById('gsi-btn'), {
-          theme: 'filled_black',
-          size: 'large',
-          text: 'continue_with',
-          width: 340
+          theme: 'filled_black', size: 'large', text: 'continue_with', width: 340
         });
         showGsiButton();
-      } else {
-        // GSI or clientId unavailable — show dev bypass if no button appears
-        setTimeout(() => {
-          const iframe = document.querySelector('.g_id_signin iframe');
-          if (!iframe) {
-            showGsiButton(); // hide spinner at least
-            document.getElementById('dev-bypass').style.display = 'block';
-          }
-        }, 1500);
+        return;
       }
+
+      // GSI not ready yet — poll every 50ms, give up after 3s and show dev bypass
+      let waited = 0;
+      const poll = setInterval(() => {
+        waited += 50;
+        if (window.google && window.google.accounts) {
+          clearInterval(poll);
+          google.accounts.id.initialize({ client_id: clientId, callback: handleCredentialResponse, auto_prompt: false });
+          google.accounts.id.renderButton(document.getElementById('gsi-btn'), {
+            theme: 'filled_black', size: 'large', text: 'continue_with', width: 340
+          });
+          showGsiButton();
+        } else if (waited >= 3000) {
+          clearInterval(poll);
+          showGsiButton(); // hide spinner
+          document.getElementById('dev-bypass').style.display = 'block';
+        }
+      }, 50);
     }
+
+    // Start polling immediately — don't wait for DOMContentLoaded or window.onload
+    initGoogleAuth();
 
     async function handleCredentialResponse(response) {
       const msg = document.getElementById('status-msg');
