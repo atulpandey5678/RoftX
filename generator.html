@@ -559,7 +559,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if(!selectedHook){alert('Please select a hook first.');return;}
     startLoading('Drafting Your Post...',['Applying E.N.G.A.G.E framework...','Matching your voice...','Optimising for engagement...','Adding a strong CTA...']);
     try{
-      const data=await callGenerateApi('post',{niche:nicheInput.value.trim(),topic:topicInput.value.trim(),chosenHook:selectedHook,voiceProfile});
+      // Pass save:true so the backend persists this post to the posts table and
+      // logs a generation event — both required for dashboard display and usage sync.
+      const data=await callGenerateApi('post',{
+        niche:nicheInput.value.trim(),
+        topic:topicInput.value.trim(),
+        chosenHook:selectedHook,
+        voiceProfile,
+        save:true
+      });
       postOutput.value=data.post||'';
       charCount.textContent=postOutput.value.length;
       showState('state-post');

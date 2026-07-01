@@ -514,10 +514,19 @@ const quotaForGeneration = {
   },
 };
 
+// Thin wrapper that always delegates to the current `persistence` value.
+// This is needed because `persistence` is set asynchronously after the DB
+// connects, but `createGenerationService` captures its value at creation time.
+// The wrapper ensures the service always uses the live instance, not a stale null.
+const persistenceProxy = {
+  appendGenerationEvent: (...args) => persistence?.appendGenerationEvent?.(...args),
+  upsertPost: (...args) => persistence?.upsertPost?.(...args),
+};
+
 const generationService = createGenerationService({
   callAI,
   quota: quotaForGeneration,
-  persistence, // null in no-DB mode; the service guards on this
+  persistence: persistenceProxy,
 });
 
 app.post('/api/generate', aiLimiter, authenticateToken, async (req, res) => {
